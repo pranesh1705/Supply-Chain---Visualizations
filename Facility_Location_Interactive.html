@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facility Location Algorithms — Interactive Walkthrough</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy-light:#3A5A9B;
+    --surface-0:#F4F6FA; --surface-1:#FFFFFF; --surface-2:#FFFFFF;
+    --text-primary:#1A1A1A; --text-secondary:#5B6472; --text-muted:#98A1AC;
+    --border:#D8DEE7; --border-strong:#B7C0CC;
+    --bg-accent:#E7EEFB; --border-accent:#3A5A9B; --text-accent:#1F3864;
+    --bg-success:#E4F5E9; --border-success:#2E7D32; --text-success:#1E5C25;
+    --bg-danger:#FCE8E6; --border-danger:#C62828; --text-danger:#8E1E1E;
+    --bg-warning:#FDF3D9; --border-warning:#C9950B; --text-warning:#7A5B00;
+    --radius:10px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "SF Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ font-family:var(--font-sans); background:var(--surface-0); color:var(--text-primary); margin:0; padding:24px 16px 60px; line-height:1.5; }
+  .wrap{max-width:860px; margin:0 auto;}
+  header{text-align:center; margin-bottom:22px;}
+  header h1{font-size:22px; margin:0 0 4px; color:var(--navy);}
+  header p{font-size:14px; color:var(--text-secondary); margin:0;}
+  .card{background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:16px;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;}
+  .tabbar{display:flex; gap:4px; flex-wrap:wrap;}
+  .tabbtn{padding:9px 16px; font-size:13.5px; font-weight:600; border:none; background:none; color:var(--text-secondary); cursor:pointer; border-bottom:3px solid transparent; border-radius:6px 6px 0 0;}
+  .tabbtn.active{color:var(--navy); border-bottom:3px solid var(--navy-light); background:var(--bg-accent);}
+  .subtabbar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+  .subtabbtn{padding:6px 13px; font-size:12.5px; font-weight:600; border:1px solid var(--border); background:var(--surface-1); color:var(--text-secondary); cursor:pointer; border-radius:16px;}
+  .subtabbtn.active{color:#fff; background:var(--navy-light); border-color:var(--navy-light);}
+  .toggleWrap{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-secondary); cursor:pointer; user-select:none;}
+  .dots{display:flex; justify-content:center; gap:6px; margin-bottom:12px;}
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--border);}
+  .dot.active{background:var(--navy-light);}
+  .diagram-box{background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius); padding:10px;}
+  .caption{margin-top:14px; font-size:14.5px; line-height:1.6;}
+  .weightbox{margin-top:10px; background:var(--surface-0); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--text-secondary);}
+  .weightbox b{color:var(--text-primary);}
+  .realworld{display:none; margin-top:12px; background:var(--bg-accent); border:1px solid var(--border-accent); border-radius:var(--radius); padding:14px 16px; font-size:13.5px; line-height:1.55;}
+  .realworld b{color:var(--text-accent);}
+  .navrow{display:flex; justify-content:space-between; align-items:center; margin-top:18px;}
+  button.nav{padding:9px 18px; border-radius:8px; font-size:13.5px; cursor:pointer;}
+  #btnPrev{border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary);}
+  #btnNext{border:1px solid var(--border-accent); background:var(--navy); color:#fff; font-weight:600;}
+  #stepLabel{font-size:12.5px; color:var(--text-secondary);}
+  .node-label{font-size:13px; font-weight:700;}
+  .node-sub{font-size:10px;}
+  .edge-label{font-size:12px; font-weight:600;}
+  .s-total{font-size:13px; font-weight:700;}
+  .intuition-text{font-size:14.5px; line-height:1.65;}
+  .intuition-text .formula{font-family:var(--font-mono); background:var(--surface-0); border:1px solid var(--border); border-radius:6px; padding:8px 12px; display:inline-block; margin:6px 0;}
+  table.bijtable{border-collapse:collapse; width:100%; margin-top:12px; font-size:12.5px;}
+  table.bijtable th, table.bijtable td{border:1px solid var(--border); padding:6px 8px; text-align:center;}
+  table.bijtable th{background:var(--navy); color:#fff;}
+  table.bijtable td.maxcell{background:var(--bg-warning); font-weight:700; color:var(--text-warning);}
+  .practice-problem{background:var(--surface-0); border:1px dashed var(--border-strong); border-radius:var(--radius); padding:14px 16px; font-size:13.5px; margin-bottom:10px;}
+  .revealbtn{padding:9px 18px; border-radius:8px; font-size:13.5px; cursor:pointer; border:1px solid var(--border-accent); background:var(--bg-accent); color:var(--text-accent); font-weight:600; margin-top:6px;}
+  .solutionwrap{display:none; margin-top:16px; border-top:2px dashed var(--border); padding-top:14px;}
+  .stepper-flex{display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;}
+  .stepper-main{flex:1 1 380px; min-width:300px;}
+  .stepper-bij{flex:0 0 260px; min-width:220px; background:var(--surface-0); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px;}
+  .stepper-bij h4{margin:0 0 6px; font-size:12.5px; color:var(--navy); text-transform:uppercase; letter-spacing:0.03em;}
+  .stepper-bij table.bijtable{font-size:11.5px; margin-top:4px;}
+  .stepper-bij table.bijtable th, .stepper-bij table.bijtable td{padding:4px 6px;}
+  footer{text-align:center; font-size:11.5px; color:var(--text-muted); margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Facility Location Algorithms — Interactive Walkthrough</h1>
+    <p>SCM (DOPS210) &middot; Absolute 1-Median, Absolute 1-Center, Absolute k-Center</p>
+    <p>Prof. Pranesh &middot; Prof. Sandeep</p>
+  </header>
+
+  <div class="card">
+    <div class="topbar">
+      <div class="tabbar" id="tabbar"></div>
+    </div>
+    <div class="subtabbar" id="subtabbar"></div>
+    <div id="modeArea"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// ===================================================================
+// GENERIC TREE ENGINE
+// ===================================================================
+function buildAdjacency(edges) {
+  var adj = {};
+  edges.forEach(function(e) {
+    var a=e[0], b=e[1], len=e[2];
+    (adj[a]=adj[a]||[]).push({to:b, len:len});
+    (adj[b]=adj[b]||[]).push({to:a, len:len});
+  });
+  return adj;
+}
+function bfsDistancesAndParents(adj, source) {
+  var dist = {}, parent = {};
+  dist[source] = 0; parent[source] = null;
+  var queue = [source];
+  while (queue.length) {
+    var u = queue.shift();
+    (adj[u]||[]).forEach(function(edge) {
+      if (!(edge.to in dist)) { dist[edge.to] = dist[u] + edge.len; parent[edge.to] = u; queue.push(edge.to); }
+    });
+  }
+  return {dist:dist, parent:parent};
+}
+function allPairsDistances(nodeIds, adj) {
+  var D = {};
+  nodeIds.forEach(function(i) { D[i] = bfsDistancesAndParents(adj, i).dist; });
+  return D;
+}
+function pathBetween(adj, from, to) {
+  var r = bfsDistancesAndParents(adj, from);
+  var path = [to], cur = to;
+  while (cur !== from) { cur = r.parent[cur]; path.push(cur); }
+  path.reverse();
+  return path;
+}
+function edgeLenLookupFactory(edges) {
+  var m = {};
+  edges.forEach(function(e){ m[e[0]+'-'+e[1]] = e[2]; m[e[1]+'-'+e[0]] = e[2]; });
+  return function(a,b){ return m[a+'-'+b]; };
+}
+function walkAlongPath(path, edgeLenLookup, d) {
+  var remaining = d;
+  for (var i=0;i<path.length-1;i++) {
+    var a = path[i], b = path[i+1];
+    var len = edgeLenLookup(a,b);
+    if (remaining <= len + 1e-9) return {fromNode:a, toNode:b, distFromA: remaining, edgeLen: len};
+    remaining -= len;
+  }
+  throw new Error("walk overrun");
+}
+function round1(x){ return Math.round(x*10)/10; }
+
+function runMedianAlgorithm(weights0, edges, tieBreakDesc) {
+  var weights = Object.assign({}, weights0);
+  var components = {};
+  Object.keys(weights).forEach(function(id){ components[id] = [Number(id)]; });
+  var adj = buildAdjacency(edges);
+  var remaining = Object.keys(weights).map(Number);
+  var liveAdj = {};
+  remaining.forEach(function(id){ liveAdj[id] = (adj[id]||[]).slice(); });
+  var steps = []; var S = 0; var merged = [];
+  while (remaining.length > 1) {
+    var leaves = remaining.filter(function(id){ return liveAdj[id].length === 1; });
+    leaves.sort(function(a,b){ return (weights[a]-weights[b]) || (tieBreakDesc ? (b-a) : (a-b)); });
+    var leaf = leaves[0];
+    var nb = liveAdj[leaf][0];
+    var neighbor = nb.to, edgeLen = nb.len;
+    var weightsBefore = Object.assign({}, weights);
+    var componentsBefore = JSON.parse(JSON.stringify(components));
+    var foldedWeight = weights[leaf];
+    var costAdded = edgeLen * foldedWeight;
+    S += costAdded;
+    weights[neighbor] += foldedWeight;
+    components[neighbor] = components[neighbor].concat(components[leaf]);
+    steps.push({
+      foldedId: leaf, neighborId: neighbor, edgeLen: edgeLen,
+      foldedWeight: foldedWeight, costAdded: costAdded, sBefore: S - costAdded, sAfter: S,
+      weightsBefore: weightsBefore, componentsBefore: componentsBefore, mergedBefore: merged.slice()
+    });
+    merged.push(leaf);
+    remaining = remaining.filter(function(id){ return id !== leaf; });
+    liveAdj[neighbor] = liveAdj[neighbor].filter(function(x){ return x.to !== leaf; });
+    delete liveAdj[leaf];
+  }
+  return { steps: steps, finalNode: remaining[0], finalS: S };
+}
+function computeBijMatrix(weights, D, nodeIds) {
+  var maxVal = -1, maxPair = null, matrix = [];
+  for (var i=0;i<nodeIds.length;i++) for (var j=i+1;j<nodeIds.length;j++) {
+    var a = nodeIds[i], b = nodeIds[j], d = D[a][b];
+    var bij = (weights[a]*weights[b]*d)/(weights[a]+weights[b]);
+    matrix.push({a:a,b:b,d:d,bij:bij});
+    if (bij > maxVal) { maxVal = bij; maxPair = [a,b]; }
+  }
+  return {matrix:matrix, maxVal:maxVal, maxPair:maxPair};
+}
+
+// ---- k-center brute-force verified solver ----
+function componentsIfEdgeRemoved(adj, a, b) {
+  var visited = {}; visited[a]=true; var queue=[a];
+  while(queue.length){
+    var u=queue.shift();
+    (adj[u]||[]).forEach(function(e){
+      if (u===a && e.to===b) return;
+      if (u===b && e.to===a) return;
+      if (!visited[e.to]) { visited[e.to]=true; queue.push(e.to); }
+    });
+  }
+  return visited;
+}
+function buildCandidatePoints(nodeIds, edges, adj, D, steps) {
+  var points = [];
+  nodeIds.forEach(function(id){
+    var distTo={}; nodeIds.forEach(function(v){distTo[v]=D[id][v];});
+    points.push({ isNode:true, node:id, distTo: distTo });
+  });
+  edges.forEach(function(e){
+    var a=e[0], b=e[1], len=e[2];
+    var compA = componentsIfEdgeRemoved(adj, a, b);
+    for (var s=1; s<steps; s++) {
+      var t = s/steps, distFromA=t*len, distFromB=len-distFromA, distTo={};
+      nodeIds.forEach(function(v){
+        if (v===a) { distTo[v]=distFromA; return; }
+        if (v===b) { distTo[v]=distFromB; return; }
+        if (compA[v]) distTo[v] = distFromA + D[a][v]; else distTo[v] = distFromB + D[b][v];
+      });
+      points.push({isNode:false, edge:[a,b], distFromA:distFromA, edgeLen:len, distTo:distTo});
+    }
+  });
+  return points;
+}
+function feasibleWithKPoints(points, nodeIds, r, k) {
+  var covers = points.map(function(p){
+    var set = 0;
+    nodeIds.forEach(function(v, idx){ if (p.distTo[v] <= r + 1e-9) set |= (1<<idx); });
+    return set;
+  });
+  var full = (1<<nodeIds.length)-1;
+  for (var i=0;i<covers.length;i++) {
+    for (var j=i;j<covers.length;j++) {
+      if ((covers[i]|covers[j]) === full) return {ok:true, points:[points[i], points[j]]};
+    }
+  }
+  return {ok:false};
+}
+function findMinimalRadius(nodeIds, edges, weights, k, discSteps) {
+  var adj = buildAdjacency(edges);
+  var D = allPairsDistances(nodeIds, adj);
+  var bijRes = computeBijMatrix(weights, D, nodeIds);
+  var candidateRs = Array.from(new Set(bijRes.matrix.map(function(m){return Math.round(m.bij*1000)/1000;}))).sort(function(a,b){return a-b;});
+  var points = buildCandidatePoints(nodeIds, edges, adj, D, discSteps||60);
+  var best = null;
+  for (var i=0;i<candidateRs.length;i++) {
+    var r = candidateRs[i];
+    var res = feasibleWithKPoints(points, nodeIds, r, k);
+    if (res.ok) { best = {r:r, points:res.points}; break; }
+  }
+  return {candidateRs:candidateRs, best:best, bijMatrix:bijRes.matrix};
+}
+function describePointShort(p) {
+  if (p.isNode) return "Town " + p.node;
+  return (Math.round(p.distFromA*100)/100) + " km from Town " + p.edge[0] + " on road to Town " + p.edge[1];
+}
+
+// ===================================================================
+// SVG RENDERING
+// ===================================================================
+function svgNS(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function drawGraph(svg, tree, edgeLens, step, showMerged) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  var colors = {
+    default: {fill:'var(--surface-1)', stroke:'var(--border-strong)', text:'var(--text-primary)'},
+    accent:  {fill:'var(--bg-accent)', stroke:'var(--border-accent)', text:'var(--text-accent)'},
+    success: {fill:'var(--bg-success)', stroke:'var(--border-success)', text:'var(--text-success)'},
+    danger:  {fill:'var(--bg-danger)', stroke:'var(--border-danger)', text:'var(--text-danger)'}
+  };
+  var merged = step.merged || [];
+  function isVisible(id){ return merged.indexOf(parseInt(id)) === -1 || showMerged; }
+  function isMerged(id){ return merged.indexOf(parseInt(id)) !== -1; }
+
+  tree.edges.forEach(function(e){
+    var a = tree.nodes[e[0]], b = tree.nodes[e[1]];
+    if (!isVisible(e[0]) || !isVisible(e[1])) return;
+    var key = e[0]+'-'+e[1];
+    var faded = isMerged(e[0]) || isMerged(e[1]);
+    var line = svgNS('line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    var highlighted = step.highlightEdges && step.highlightEdges.indexOf(key) !== -1;
+    line.setAttribute('stroke', highlighted ? 'var(--border-accent)' : 'var(--border-strong)');
+    line.setAttribute('stroke-width', highlighted ? '2.5' : '1.2');
+    if (faded) line.setAttribute('opacity','0.3');
+    svg.appendChild(line);
+    var mx=(a.x+b.x)/2, my=(a.y+b.y)/2, dx=b.x-a.x, dy=b.y-a.y, len=Math.sqrt(dx*dx+dy*dy);
+    var offx=-dy/len*14, offy=dx/len*14;
+    var lbl = svgNS('text');
+    lbl.setAttribute('x', mx+offx); lbl.setAttribute('y', my+offy);
+    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('class','edge-label');
+    lbl.setAttribute('fill','var(--text-secondary)');
+    if (faded) lbl.setAttribute('opacity','0.3');
+    lbl.textContent = edgeLens[key] + ' km';
+    svg.appendChild(lbl);
+  });
+
+  if (step.facilityPoint) {
+    step.facilityPoint.forEach(function(fp){
+      var a = tree.nodes[fp.from], b = tree.nodes[fp.to];
+      var fx = a.x+(b.x-a.x)*fp.frac, fy = a.y+(b.y-a.y)*fp.frac;
+      var star = svgNS('circle');
+      star.setAttribute('cx', fx); star.setAttribute('cy', fy); star.setAttribute('r', 9);
+      star.setAttribute('fill','var(--bg-warning)'); star.setAttribute('stroke','var(--border-warning)'); star.setAttribute('stroke-width','2');
+      svg.appendChild(star);
+      var flbl = svgNS('text');
+      flbl.setAttribute('x', fx); flbl.setAttribute('y', fy-16);
+      flbl.setAttribute('text-anchor','middle'); flbl.setAttribute('class','node-sub'); flbl.setAttribute('font-weight','700');
+      flbl.setAttribute('fill','var(--text-warning)');
+      flbl.textContent = fp.label || 'Facility';
+      svg.appendChild(flbl);
+    });
+  }
+  if (step.circles) {
+    step.circles.forEach(function(c){
+      var n = tree.nodes[c.node];
+      var circ = svgNS('circle');
+      circ.setAttribute('cx', n.x); circ.setAttribute('cy', n.y); circ.setAttribute('r', c.r*22);
+      circ.setAttribute('fill','none'); circ.setAttribute('stroke', c.color || 'var(--border-accent)');
+      circ.setAttribute('stroke-width','1.5'); circ.setAttribute('stroke-dasharray','4 3'); circ.setAttribute('opacity','0.85');
+      svg.appendChild(circ);
+    });
+  }
+  Object.keys(tree.nodes).forEach(function(id){
+    if (!isVisible(id)) return;
+    var n = tree.nodes[id];
+    var nodeIsMerged = isMerged(id);
+    var st = colors[(step.state && step.state[id]) || 'default'];
+    var g = svgNS('g');
+    if (nodeIsMerged) g.setAttribute('opacity','0.32');
+    var r = svgNS('circle');
+    r.setAttribute('cx', n.x); r.setAttribute('cy', n.y); r.setAttribute('r', 30);
+    r.setAttribute('fill', st.fill); r.setAttribute('stroke', st.stroke); r.setAttribute('stroke-width','1.6');
+    if (nodeIsMerged) r.setAttribute('stroke-dasharray','3 2');
+    g.appendChild(r);
+    var t1 = svgNS('text');
+    t1.setAttribute('x', n.x); t1.setAttribute('y', n.y-2);
+    t1.setAttribute('text-anchor','middle'); t1.setAttribute('class','node-label'); t1.setAttribute('fill', st.text);
+    t1.textContent = 'Town ' + id;
+    g.appendChild(t1);
+    var t2 = svgNS('text');
+    t2.setAttribute('x', n.x); t2.setAttribute('y', n.y+14);
+    t2.setAttribute('text-anchor','middle'); t2.setAttribute('class','node-sub'); t2.setAttribute('fill', st.text);
+    var lbl = (step.labels && step.labels[id]) || {};
+    t2.textContent = nodeIsMerged ? 'folded in' : (lbl.sub || '');
+    g.appendChild(t2);
+    svg.appendChild(g);
+  });
+  if (step.badge) {
+    var bx=560, by=34;
+    var brect = svgNS('rect');
+    brect.setAttribute('x', bx-95); brect.setAttribute('y', by-22); brect.setAttribute('width',190); brect.setAttribute('height',34); brect.setAttribute('rx',8);
+    brect.setAttribute('fill','var(--bg-warning)'); brect.setAttribute('stroke','var(--border-warning)');
+    svg.appendChild(brect);
+    var btxt = svgNS('text');
+    btxt.setAttribute('x', bx); btxt.setAttribute('y', by+2);
+    btxt.setAttribute('text-anchor','middle'); btxt.setAttribute('class','s-total'); btxt.setAttribute('fill','var(--text-warning)');
+    btxt.textContent = step.badge;
+    svg.appendChild(btxt);
+  }
+}
+
+function labelFor(id, weight, components){
+  var comp = components && components.length>1 ? ' (Towns '+components.join(', ')+' combined)' : '';
+  return 'weight ' + weight + comp;
+}
+
+function buildMedianSteps(W, edges, realworldText, edgeLens, tieBreakDesc){
+  var run = runMedianAlgorithm(W, edges, tieBreakDesc);
+  var steps = [];
+  var ids = Object.keys(W).map(Number);
+  steps.push({
+    merged: [], state: {},
+    labels: (function(){ var l={}; ids.forEach(function(id){ l[id]={sub: labelFor(id, W[id], [id])}; }); return l; })(),
+    caption: "This is a town map. Distances are the roads between towns; the weight under each name is that town's market size (demand). Goal: pick ONE town to build a warehouse in, so total (distance × demand shipped) across all towns is as small as possible.",
+    badge: "S (total cost) = 0"
+  });
+  run.steps.forEach(function(s, i){
+    var isLast = (i === run.steps.length-1);
+    var labels = {};
+    Object.keys(s.weightsBefore).forEach(function(id){
+      if (parseInt(id) === s.foldedId) labels[id] = {sub: labelFor(id, s.foldedWeight, s.componentsBefore[id])};
+      else labels[id] = {sub: labelFor(id, s.weightsBefore[id], s.componentsBefore[id])};
+    });
+    var actionText = isLast
+      ? ("Only Towns " + s.foldedId + " and " + s.neighborId + " remain. Town " + s.foldedId + " currently carries weight " + s.foldedWeight +
+         (s.componentsBefore[s.foldedId].length>1 ? " (representing Towns " + s.componentsBefore[s.foldedId].join(', ') + " combined)" : "") +
+         " — fold it into Town " + s.neighborId + ": " + s.edgeLen + " km × weight " + s.foldedWeight + " = " + s.costAdded + ".")
+      : ("Town " + s.foldedId + " is a dead-end (only one road) and currently has weight " + s.foldedWeight +
+         (s.componentsBefore[s.foldedId].length>1 ? " (Towns " + s.componentsBefore[s.foldedId].join(', ') + " combined)" : "") +
+         " — the smallest of any dead-end right now, so absorb it into Town " + s.neighborId + ": " + s.edgeLen + " km × weight " + s.foldedWeight + " = " + s.costAdded + ".");
+    steps.push({
+      merged: s.mergedBefore,
+      state: (function(){ var st={}; st[s.foldedId]='accent'; st[s.neighborId]='accent'; return st; })(),
+      labels: labels,
+      highlightEdges: [s.foldedId+'-'+s.neighborId, s.neighborId+'-'+s.foldedId],
+      caption: "Step " + (i+1) + ": " + actionText,
+      badge: "S = " + s.sBefore + " + " + s.costAdded + " = " + s.sAfter
+    });
+  });
+  var finalState = {}; finalState[run.finalNode] = 'success';
+  steps.push({
+    merged: run.steps.map(function(s){return s.foldedId;}),
+    state: finalState,
+    labels: (function(){ var l={}; l[run.finalNode]={sub:'★ WAREHOUSE HERE'}; return l; })(),
+    caption: "Done — one town is left: Town " + run.finalNode + ". That is the 1-median: the cost-minimizing warehouse location. Total weighted distance = " + run.finalS + ", provably lower than putting the warehouse in any other town.",
+    badge: "FINAL: Town " + run.finalNode + ", S = " + run.finalS,
+    realworld: realworldText
+  });
+  return {steps:steps, run:run};
+}
+
+function buildCenterSteps(W, edges, realworldText){
+  var ids = Object.keys(W).map(Number);
+  var adj = buildAdjacency(edges);
+  var D = allPairsDistances(ids, adj);
+  var bij = computeBijMatrix(W, D, ids);
+  var pairA = bij.maxPair[0], pairB = bij.maxPair[1];
+  var pathAB = pathBetween(adj, pairA, pairB);
+  var physicalDist = D[pairA][pairB];
+  var distFromA = round1((W[pairB]*D[pairA][pairB])/(W[pairA]+W[pairB]));
+  var lenLookup = edgeLenLookupFactory(edges);
+  var walk = walkAlongPath(pathAB, lenLookup, distFromA);
+  var baseLabels = function(){ var l={}; ids.forEach(function(id){ l[id]={sub:labelFor(id,W[id],[id])}; }); return l; };
+  var pairLabels = function(txt){ var l={}; ids.forEach(function(id){ l[id]={sub:(id===pairA||id===pairB)?txt:labelFor(id,W[id],[id])}; }); return l; };
+  var highlightEdges = pathAB.slice(0,-1).map(function(n,i){return n+'-'+pathAB[i+1];});
+  var sameWeight = (W[pairA] === W[pairB]);
+  var steps = [
+    { merged:[], state:{}, labels: baseLabels(),
+      caption: "Same town map, same market sizes. Different question this time: I don't care about the total bill — I care that NO single town is left badly under-served. Where's the fairest single location?",
+      badge: "Objective: minimize worst case" },
+    { merged:[], state:(function(){var s={}; s[pairA]='accent'; s[pairB]='accent'; return s;})(), labels: pairLabels('hardest pair'),
+      highlightEdges: highlightEdges,
+      caption: "We test every pair of towns for how 'hard' they are to serve together (blending distance and both towns' weights). The worst pair turns out to be Town " + pairA + " and Town " + pairB + " — " + physicalDist + " km apart via " + pathAB.join(' → ') + (sameWeight ? "" : " (Town "+pairA+" weight "+W[pairA]+", Town "+pairB+" weight "+W[pairB]+")") + ". Blending that distance with both towns' weights gives a worst-case value of " + bij.maxVal.toFixed(bij.maxVal % 1 === 0 ? 0 : 2) + " — the largest of any pair — so this pair sets the limit no matter where we build.",
+      badge: "Worst-case value = " + bij.maxVal.toFixed(bij.maxVal % 1 === 0 ? 0 : 2) },
+    { merged:[], state:(function(){var s={}; s[pairA]='accent'; s[pairB]='accent'; return s;})(), labels: pairLabels(distFromA+' km to facility'),
+      highlightEdges: highlightEdges,
+      facilityPoint:[{from:walk.fromNode,to:walk.toNode,frac:walk.distFromA/walk.edgeLen,label:'Facility'}],
+      caption: "Because the balance point equalizes weight × distance on both sides, walking " + distFromA + " km from Town " + pairA + " (via " + pathAB.slice(1,-1).join(', ') + ") lands " + walk.distFromA + " km past Town " + walk.fromNode + ", on the road toward Town " + walk.toNode + ".",
+      badge: "Facility: " + walk.distFromA + " km past Town " + walk.fromNode },
+    { merged:[], state:(function(){var s={}; s[pairA]='success'; s[pairB]='success'; return s;})(), labels: pairLabels(distFromA+' km ✓'),
+      facilityPoint:[{from:walk.fromNode,to:walk.toNode,frac:walk.distFromA/walk.edgeLen,label:'★ FACILITY'}],
+      caption: "Final answer: the facility sits " + (walk.distFromA<0.01 ? ("exactly at Town "+walk.fromNode) : (walk.distFromA > walk.edgeLen-0.01 ? ("exactly at Town "+walk.toNode) : ("on the road between Town " + walk.fromNode + " and Town " + walk.toNode))) + ". It's purely the fairest compromise point between the two hardest-to-reach towns — not necessarily near the biggest market.",
+      badge: "1-center ≠ 1-median!",
+      realworld: realworldText }
+  ];
+  return {steps:steps, bij:bij, pairA:pairA, pairB:pairB, walk:walk, distFromA:distFromA};
+}
+
+// ===================================================================
+// DATA
+// ===================================================================
+var TREE5A = { nodes:{ 1:{x:150,y:210}, 2:{x:380,y:210}, 3:{x:150,y:340}, 4:{x:560,y:110}, 5:{x:560,y:310} }, edges:[[1,2],[1,3],[2,4],[2,5]] };
+var TREE4  = { nodes:{ 1:{x:130,y:210}, 2:{x:360,y:210}, 3:{x:130,y:340}, 4:{x:580,y:210} }, edges:[[1,2],[1,3],[2,4]] };
+var TREE5K = { nodes:{ 1:{x:200,y:220}, 2:{x:40,y:220}, 3:{x:400,y:220}, 4:{x:580,y:110}, 5:{x:580,y:330} }, edges:[[1,2],[1,3],[3,4],[3,5]] };
+
+// ---- MEDIAN / CENTER Example 1 & 3 ----
+var W1 = {1:4,2:1,3:2,4:1,5:2};
+var E1 = [[1,2,2],[1,3,4],[2,4,7],[2,5,5]];
+var edgeLens1 = {'1-2':2,'1-3':4,'2-4':7,'2-5':5};
+var RW_MEDIAN = "Real supply chain example: a regional FMCG or snacks distributor picking ONE depot to serve several towns. Cost is what matters (freight bill), so the depot gravitates toward the town with the biggest market — exactly like a company choosing to warehouse near its highest-volume city rather than a small outlying town.";
+var RW_CENTER = "Real supply chain example: an ambulance base, fire station, or a critical spare-parts depot for factory breakdowns. You're not minimizing an average freight bill — you're capping the worst response distance so no single customer is ever left stranded. Same towns as the warehouse example, completely different answer, because the business question changed from 'minimize cost' to 'guarantee fairness'.";
+var medianEx1 = buildMedianSteps(W1, E1, RW_MEDIAN);
+var medianEx1Alt = buildMedianSteps(W1, E1, RW_MEDIAN, null, true);
+var centerEx3 = buildCenterSteps(W1, E1, RW_CENTER);
+
+// ---- MEDIAN / CENTER Example 2 & 4 ----
+var W2 = {1:4,2:1,3:2,4:1,5:2};
+var E2 = [[1,2,3],[1,3,5],[2,4,6],[2,5,7]];
+var edgeLens2 = {'1-2':3,'1-3':5,'2-4':6,'2-5':7};
+var medianEx2 = buildMedianSteps(W2, E2, RW_MEDIAN);
+var medianEx2Alt = buildMedianSteps(W2, E2, RW_MEDIAN, null, true);
+var centerEx4 = buildCenterSteps(W2, E2, RW_CENTER);
+
+// find the first step where the default and alt tie-break orders diverge,
+// so the UI can name exactly which two towns were tied (rather than assuming)
+function findTieDivergence(runA, runB){
+  for (var i=0;i<runA.steps.length;i++){
+    if (runA.steps[i].foldedId !== runB.steps[i].foldedId) {
+      return { townA: runA.steps[i].foldedId, townB: runB.steps[i].foldedId };
+    }
+  }
+  return null;
+}
+var medianEx1Tie = findTieDivergence(medianEx1.run, medianEx1Alt.run);
+var medianEx2Tie = findTieDivergence(medianEx2.run, medianEx2Alt.run);
+
+// ---- MEDIAN / CENTER Practice (new numbers, not in the deck) ----
+var Wp = {1:3,2:5,3:2,4:1,5:4};
+var Ep = [[1,2,4],[1,3,6],[2,4,3],[2,5,5]];
+var edgeLensP = {'1-2':4,'1-3':6,'2-4':3,'2-5':5};
+var medianPractice = buildMedianSteps(Wp, Ep, RW_MEDIAN);
+var centerPractice = buildCenterSteps(Wp, Ep, RW_CENTER);
+
+// ---- K-CENTER Example 5 (kept faithful to the deck's own stated facility positions) ----
+var Wk5 = {1:2,2:2,3:2,4:2};
+var Ek5 = [[1,2,2],[1,3,4],[2,4,5]];
+var edgeLensK5 = {'1-2':2,'1-3':4,'2-4':5};
+var RW_KCENTER = "Real supply chain example: a courier company promising same-day delivery within a radius, or a telecom deciding how many service centers it needs so no customer waits more than a fixed distance for a technician. This is exactly the manual, small-scale version of the 'coverage constraint' that a large-scale MILP network-design model enforces in software.";
+var kcenter5_steps = [
+  { tree:TREE4, edges:edgeLensK5, merged:[], state:{}, labels:{1:{sub:'weight 2'},2:{sub:'weight 2'},3:{sub:'weight 2'},4:{sub:'weight 2'}},
+    caption: "I'm allowed to build 2 facilities (k=2) on this map. What is the smallest 'coverage radius' I can promise every customer — and where do the 2 facilities go?",
+    badge: "k = 2 facilities allowed" },
+  { tree:TREE4, edges:edgeLensK5, merged:[], state:{1:'accent',2:'accent',4:'accent'}, labels:{1:{sub:'weight 2'},2:{sub:'★ Facility A'},3:{sub:'weight 2'},4:{sub:'★ Facility B (on road)'}},
+    facilityPoint:[{from:2,to:4,frac:0.2,label:'Facility B'}],
+    circles:[{node:2,r:5*0.44,color:'var(--border-accent)'}],
+    caption: "Try a radius of 5 km. Facility A at Town 2 covers Towns 1, 2 and 4 (all within 5 km). Facility B sits just past Town 1 toward Town 3 and covers Town 3. Only 2 facilities needed — 5 km works, so let's try to promise something tighter.",
+    badge: "Try r = 5 → works" },
+  { tree:TREE4, edges:edgeLensK5, merged:[], state:{1:'accent',3:'accent',4:'accent'}, labels:{1:{sub:'★ Facility A'},2:{sub:'weight 2'},3:{sub:'weight 2'},4:{sub:'★ Facility B'}},
+    facilityPoint:[{from:2,to:4,frac:0.8,label:'Facility B'}],
+    circles:[{node:1,r:4*0.44,color:'var(--border-accent)'}],
+    caption: "Tighten to r = 4 km. Facility A at Town 1 now covers Towns 1, 2 and 3. Facility B sits 1 km from Town 2 on the road to Town 4, covering Town 4. Still only 2 facilities — 4 km still works.",
+    badge: "Try r = 4 → still works" },
+  { tree:TREE4, edges:edgeLensK5, merged:[], state:{1:'accent',2:'danger',3:'accent',4:'accent'}, labels:{1:{sub:'facility here'},2:{sub:'✗ UNCOVERED'},3:{sub:'facility here'},4:{sub:'facility here'}},
+    circles:[{node:1,r:2*0.44,color:'var(--border-danger)'},{node:4,r:2*0.44,color:'var(--border-danger)'}],
+    caption: "Try to push further to r = 2 km. Now Town 2 falls outside both facilities' reach — you'd need a THIRD facility just for Town 2. So 2 km is not achievable with only 2 facilities.",
+    badge: "Try r = 2 → FAILS" },
+  { tree:TREE4, edges:edgeLensK5, merged:[], state:{1:'success',2:'success',3:'success',4:'success'}, labels:{1:{sub:'★ Facility A'},2:{sub:'covered (2 km away)'},3:{sub:'covered'},4:{sub:'★ Facility B (4 km away)'}},
+    facilityPoint:[{from:2,to:4,frac:0.8,label:'Facility B'}],
+    caption: "So r = 4 km is the tightest guarantee possible with 2 facilities: one at Town 1, one on the road to Town 4 (1 km from Town 2). Every town is within 4 km of a facility — and we've proven you can't do better without a third facility.",
+    badge: "FINAL: r = 4, k = 2",
+    realworld: RW_KCENTER }
+];
+var bijK5 = computeBijMatrix(Wk5, allPairsDistances([1,2,3,4], buildAdjacency(Ek5)), [1,2,3,4]);
+
+// ---- K-CENTER Practice (new numbers, brute-force verified) ----
+var Wkp = {1:2,2:2,3:2,4:2,5:2};
+var Ekp = [[1,2,3],[1,3,5],[3,4,2],[3,5,4]];
+var edgeLensKp = {'1-2':3,'1-3':5,'3-4':2,'3-5':4};
+var kpRes = findMinimalRadius([1,2,3,4,5], Ekp, Wkp, 2, 80);
+function buildKCenterPracticeSteps(){
+  var r = kpRes.best.r;
+  var pts = kpRes.best.points;
+  var labelState = {}; var labels = {};
+  [1,2,3,4,5].forEach(function(id){ labels[id]={sub:'weight 2'}; });
+  var circleData = pts.map(function(p){
+    return p.isNode ? {node:p.node, r:r*0.44, color:'var(--border-success)'} : null;
+  }).filter(Boolean);
+  var facilityPts = pts.filter(function(p){return !p.isNode;}).map(function(p){
+    return {from:p.edge[0], to:p.edge[1], frac:p.distFromA/p.edgeLen, label:'Facility'};
+  });
+  var finalState = {};
+  pts.forEach(function(p){ if (p.isNode) finalState[p.node]='success'; });
+  var descList = pts.map(describePointShort).join(' and ');
+  return [
+    { tree:TREE5K, edges:edgeLensKp, merged:[], state:{}, labels: labels,
+      caption: "New map, k=2 again. Try to work out the tightest coverage radius yourself before revealing — same method as Example 5: build the bij matrix, take candidate radii from it, and test feasibility from the largest gaps inward.",
+      badge: "k = 2 facilities allowed" },
+    { tree:TREE5K, edges:edgeLensKp, merged:[], state:finalState, labels: labels,
+      circles: circleData, facilityPoint: facilityPts,
+      caption: "Solved: the tightest achievable radius is r = " + r + " km, with facilities at " + descList + ". (Verified by brute-force search over the network — not hand-typed — so this is guaranteed to be a genuine optimum, not just 'a' feasible answer.)",
+      badge: "FINAL: r = " + r + ", k = 2",
+      realworld: RW_KCENTER }
+  ];
+}
+var kcenterPractice_steps = buildKCenterPracticeSteps();
+
+// ===================================================================
+// INTUITION PANEL BUILDERS
+// ===================================================================
+function bijTableHTML(bijMatrix, maxPair){
+  var rows = bijMatrix.map(function(m){
+    var isMax = (m.a===maxPair[0]&&m.b===maxPair[1]) || (m.a===maxPair[1]&&m.b===maxPair[0]);
+    return '<tr><td>'+m.a+'&ndash;'+m.b+'</td><td>'+m.d+'</td><td class="'+(isMax?'maxcell':'')+'">'+m.bij.toFixed(2)+(isMax?' &larr; max':'')+'</td></tr>';
+  }).join('');
+  return '<table class="bijtable"><tr><th>Pair (i, j)</th><th>d(i,j)</th><th>b<sub>ij</sub> = w<sub>i</sub>w<sub>j</sub>d<sub>ij</sub> / (w<sub>i</sub>+w<sub>j</sub>)</th></tr>'+rows+'</table>';
+}
+
+function medianIntuitionHTML(){
+  return '<div class="intuition-text">'+
+  '<p><b>Why fold the smallest-weight dead-end first?</b> Picture each town\'s weight as a physical mass. The 1-median is the point that balances all that mass across the network — the network-equivalent of the statistical median, which balances how many data points sit on each side.</p>'+
+  '<p>If a town is a dead-end (only one road) and carries very little mass, it genuinely cannot shift the overall balance point by much no matter where the facility ends up — so it is always safe to scoop its mass into its only neighbour immediately and keep working with a smaller tree. Repeat this enough times and the very last town left standing is the true balance point.</p>'+
+  '<p><b>Where you would actually use this:</b> anywhere the goal is minimizing total distribution cost and it is fine for some customers to be farther away as long as the total bill is lowest &mdash; a single warehouse or distribution center for a manufacturer, a regional depot for an FMCG/snacks distributor, a central plant location minimizing total inbound freight from suppliers, or a head-office location minimizing total travel cost across branch visits. If the business question is &ldquo;minimize my total cost,&rdquo; it is a median-type problem.</p>'+
+  '</div>';
+}
+function centerIntuitionHTML(bijMatrix, maxPair){
+  return '<div class="intuition-text">'+
+  '<p><b>Where does b<sub>ij</sub> = w<sub>i</sub>w<sub>j</sub>d<sub>ij</sub>/(w<sub>i</sub>+w<sub>j</sub>) come from?</b> Picture just two towns, weight w<sub>i</sub> and w<sub>j</sub>, sitting d apart on a road. If you must place one facility to serve both, and you want to shrink the WORSE of the two weighted distances, the best you can do is make them exactly equal:</p>'+
+  '<div class="formula">w<sub>i</sub> &middot; x&nbsp;=&nbsp;w<sub>j</sub> &middot; (d &minus; x)</div>'+
+  '<p>Solving for x (the distance from town i) gives x = w<sub>j</sub>d/(w<sub>i</sub>+w<sub>j</sub>) — the heavier town pulls the facility closer to itself, exactly like a seesaw needing the heavier side closer to the pivot. Substituting back in, the balanced (worst-case) value both towns experience works out to exactly w<sub>i</sub>w<sub>j</sub>d/(w<sub>i</sub>+w<sub>j</sub>) — that is b<sub>ij</sub>.</p>'+
+  '<p>For a whole network we run this pairwise balance test for EVERY pair of towns. Whichever pair produces the largest b<sub>ij</sub> is the pair that truly limits us — you cannot beat that value for both of those towns no matter where you build — so that pair, and only that pair, determines where the facility goes.</p>'+
+  '<p><b>Where you would actually use this:</b> anywhere a single facility must guarantee a worst-case service level rather than minimize an average cost &mdash; an ambulance base or fire station (response time cannot be allowed to blow out for any one neighbourhood, even if it raises the average), a critical spare-parts depot for factory breakdowns, or a single regional service center where every customer needs a guaranteed maximum wait. Same network as 1-median, completely different answer, because the business question changed from &ldquo;minimize cost&rdquo; to &ldquo;guarantee fairness.&rdquo;</p>'+
+  bijTableHTML(bijMatrix, maxPair)+
+  '</div>';
+}
+function kcenterIntuitionHTML(bijMatrix){
+  var sortedR = Array.from(new Set(bijMatrix.map(function(m){return Math.round(m.bij*1000)/1000;}))).sort(function(a,b){return a-b;});
+  return '<div class="intuition-text">'+
+  '<p><b>k-center reuses the exact same b<sub>ij</sub> logic as 1-center</b> to build a shortlist of coverage-radius candidates worth testing — the set R of all distinct b<sub>ij</sub> values. It is the same "hardest pair" thinking, just used to generate candidates instead of a single final answer.</p>'+
+  '<p>For Example 5\'s network, R = {'+sortedR.join(', ')+'}. For each candidate radius r (largest gaps tested first), we test: can I cover every town using at most k facilities, each covering everything within r km of itself? The smallest r that still works with only k facilities is the answer.</p>'+
+  '<p><b>Where you would actually use this:</b> anywhere you need a guaranteed worst-case service level AND you are allowed to build more than one facility to make that guarantee affordable &mdash; how many regional fulfillment centers a courier or e-commerce company needs so every customer gets same-day or next-day delivery, how many spare-parts depots a manufacturer needs so no factory breakdown waits too long for a technician, or how many bank branches or ATMs are needed so no customer is beyond a certain distance from one. Outside supply chain, the same logic sizes ambulance/fire station networks, cell-tower placement, and vaccination-center planning. The decision rule versus 1-median: if the question is &ldquo;minimize my total cost,&rdquo; use median; if it is &ldquo;guarantee a minimum service level for everyone, and tell me how many facilities that takes,&rdquo; use k-center.</p>'+
+  bijTableHTML(bijMatrix, [null,null])+
+  '</div>';
+}
+
+// ===================================================================
+// PRACTICE PROBLEM WRAPPERS
+// ===================================================================
+function practiceProblemHTML(promptHTML){
+  return '<div class="practice-problem">'+promptHTML+'</div>'+
+         '<button class="revealbtn" id="revealBtn">Reveal step-by-step solution</button>'+
+         '<div class="solutionwrap" id="solutionWrap"></div>';
+}
+
+// ===================================================================
+// TAB / MODE STRUCTURE
+// ===================================================================
+var tabs = [
+  { name:'1-Median', modes: [
+      { name:'Intuition', type:'static', html: medianIntuitionHTML() },
+      { name:'Example 1', type:'stepper', tree:TREE5A, edges:edgeLens1, steps:medianEx1.steps, altSteps:medianEx1Alt.steps, tie:medianEx1Tie },
+      { name:'Example 2', type:'stepper', tree:TREE5A, edges:edgeLens2, steps:medianEx2.steps, altSteps:medianEx2Alt.steps, tie:medianEx2Tie },
+      { name:'Try It Yourself', type:'practice',
+        problemHTML: "<b>Practice problem (not in your slides — work it out by hand first):</b><br>Tree: (1&ndash;2)=4 km, (1&ndash;3)=6 km, (2&ndash;4)=3 km, (2&ndash;5)=5 km.<br>Weights: w<sub>1</sub>=3, w<sub>2</sub>=5, w<sub>3</sub>=2, w<sub>4</sub>=1, w<sub>5</sub>=4.<br>Find the 1-median (which town, and the minimum total weighted distance).",
+        steps: medianPractice.steps, tree:TREE5A, edges:edgeLensP }
+  ]},
+  { name:'1-Center', modes: [
+      { name:'Intuition', type:'static', html: centerIntuitionHTML(centerEx3.bij.matrix, centerEx3.bij.maxPair) },
+      { name:'Example 3', type:'stepper', tree:TREE5A, edges:edgeLens1, steps:centerEx3.steps, bijMatrix:centerEx3.bij.matrix, bijMaxPair:centerEx3.bij.maxPair },
+      { name:'Example 4', type:'stepper', tree:TREE5A, edges:edgeLens2, steps:centerEx4.steps, bijMatrix:centerEx4.bij.matrix, bijMaxPair:centerEx4.bij.maxPair },
+      { name:'Try It Yourself', type:'practice',
+        problemHTML: "<b>Practice problem (same network as the 1-Median practice problem — same numbers, different objective):</b><br>Tree: (1&ndash;2)=4 km, (1&ndash;3)=6 km, (2&ndash;4)=3 km, (2&ndash;5)=5 km.<br>Weights: w<sub>1</sub>=3, w<sub>2</sub>=5, w<sub>3</sub>=2, w<sub>4</sub>=1, w<sub>5</sub>=4.<br>Find the 1-center (build the b<sub>ij</sub> matrix, find the worst pair, locate the facility).",
+        steps: centerPractice.steps, tree:TREE5A, edges:edgeLensP, bijMatrix:centerPractice.bij.matrix, bijMaxPair:centerPractice.bij.maxPair }
+  ]},
+  { name:'k-Center', modes: [
+      { name:'Intuition', type:'static', html: kcenterIntuitionHTML(bijK5.matrix) },
+      { name:'Example 5', type:'stepper', tree:TREE4, edges:edgeLensK5, steps:kcenter5_steps, bijMatrix:bijK5.matrix, bijMaxPair:bijK5.maxPair },
+      { name:'Try It Yourself', type:'practice',
+        problemHTML: "<b>Practice problem (not in your slides):</b><br>Tree: (1&ndash;2)=3 km, (1&ndash;3)=5 km, (3&ndash;4)=2 km, (3&ndash;5)=4 km. All towns equal weight. k = 2 facilities allowed.<br>Find the smallest coverage radius achievable, and where the 2 facilities go.",
+        steps: kcenterPractice_steps, tree:TREE5K, edges:edgeLensKp, bijMatrix:kpRes.bijMatrix }
+  ]}
+];
+
+var curTab = 0, curMode = 0, curStep = 0;
+var showMerged = false;
+
+function renderTabbar(){
+  var bar = document.getElementById('tabbar');
+  bar.innerHTML = '';
+  tabs.forEach(function(t,i){
+    var b = document.createElement('button');
+    b.className = 'tabbtn' + (i===curTab?' active':'');
+    b.textContent = t.name;
+    b.onclick = function(){ curTab=i; curMode=0; curStep=0; renderAll(); };
+    bar.appendChild(b);
+  });
+}
+function renderSubtabbar(){
+  var bar = document.getElementById('subtabbar');
+  bar.innerHTML = '';
+  tabs[curTab].modes.forEach(function(m,i){
+    var b = document.createElement('button');
+    b.className = 'subtabbtn' + (i===curMode?' active':'');
+    b.textContent = m.name;
+    b.onclick = function(){ curMode=i; curStep=0; renderAll(); };
+    bar.appendChild(b);
+  });
+}
+
+function renderStepperInto(container, tab, mode){
+  var useAlt = false;
+  var tieNote = '';
+  if (mode.altSteps && mode.tie) {
+    tieNote = '<div class="realworld" style="display:block;margin-bottom:10px;"><b>Tie at Step 2:</b> Town '+mode.tie.townA+' and Town '+mode.tie.townB+
+      ' are both dead-ends with equal weight at that point — either can be folded first (your slides say "break ties arbitrarily"). Use the switch below to try it the other way and confirm you land on the exact same final answer.</div>'+
+      '<label class="toggleWrap" style="margin-bottom:8px;"><input type="checkbox" id="altToggle"> Fold Town '+mode.tie.townB+' before Town '+mode.tie.townA+' instead</label>';
+  }
+  var mainHTML =
+    tieNote +
+    '<label class="toggleWrap" style="margin-bottom:8px;"><input type="checkbox" id="mergeToggle"> Show towns already folded away</label>'+
+    '<div class="dots" id="stepdots"></div>'+
+    '<div class="diagram-box"><svg id="svgpanel" viewBox="0 0 700 380" width="100%" height="340" role="img"><title>Network diagram</title></svg></div>'+
+    '<div class="caption" id="caption"></div>'+
+    '<div class="weightbox" id="weightbox"></div>'+
+    '<div class="realworld" id="realworld"></div>'+
+    '<div class="navrow"><button class="nav" id="btnPrev">&larr; Back</button><span id="stepLabel"></span><button class="nav" id="btnNext">Next &rarr;</button></div>';
+
+  if (mode.bijMatrix) {
+    container.innerHTML =
+      '<div class="stepper-flex">'+
+        '<div class="stepper-main">'+mainHTML+'</div>'+
+        '<div class="stepper-bij"><h4>b<sub>ij</sub> matrix (live)</h4>'+bijTableHTML(mode.bijMatrix, mode.bijMaxPair||[null,null])+'</div>'+
+      '</div>';
+  } else {
+    container.innerHTML = mainHTML;
+  }
+
+  function currentSteps(){ return (useAlt && mode.altSteps) ? mode.altSteps : mode.steps; }
+
+  function renderStep(){
+    var steps = currentSteps();
+    if (curStep >= steps.length) curStep = steps.length-1;
+    var dots = container.querySelector('#stepdots'); dots.innerHTML='';
+    steps.forEach(function(_,i){
+      var d=document.createElement('div'); d.className='dot'+(i===curStep?' active':''); dots.appendChild(d);
+    });
+    var step = steps[curStep];
+    var tree = step.tree || mode.tree || tab.tree;
+    var edges = step.edges || mode.edges || tab.edges;
+    drawGraph(container.querySelector('#svgpanel'), tree, edges, step, showMerged);
+    container.querySelector('#caption').textContent = step.caption;
+    var wb = container.querySelector('#weightbox');
+    if (step.labels) {
+      var parts=[];
+      Object.keys(step.labels).forEach(function(id){
+        if ((step.merged||[]).indexOf(parseInt(id))===-1 || showMerged) parts.push('<b>Town '+id+'</b>: '+step.labels[id].sub);
+      });
+      wb.innerHTML = parts.join(' &nbsp;|&nbsp; ');
+    } else wb.innerHTML='';
+    var rw = container.querySelector('#realworld');
+    if (step.realworld) { rw.style.display='block'; rw.innerHTML='<b>Real-world example:</b> '+step.realworld.replace(/^Real supply chain example:\s*/,''); }
+    else rw.style.display='none';
+    container.querySelector('#stepLabel').textContent = (curStep+1)+' / '+steps.length;
+    container.querySelector('#btnNext').textContent = (curStep===steps.length-1) ? 'Done' : 'Next →';
+    container.querySelector('#btnNext').disabled = (curStep===steps.length-1);
+    container.querySelector('#btnPrev').disabled = (curStep===0);
+  }
+  container.querySelector('#btnPrev').onclick = function(){ if(curStep>0){curStep--; renderStep();} };
+  container.querySelector('#btnNext').onclick = function(){ if(curStep<currentSteps().length-1){curStep++; renderStep();} };
+  container.querySelector('#mergeToggle').onchange = function(e){ showMerged=e.target.checked; renderStep(); };
+  var altToggleEl = container.querySelector('#altToggle');
+  if (altToggleEl) altToggleEl.onchange = function(e){ useAlt = e.target.checked; curStep = 0; renderStep(); };
+  renderStep();
+}
+
+function renderAll(){
+  renderTabbar(); renderSubtabbar();
+  var tab = tabs[curTab]; var mode = tab.modes[curMode];
+  var area = document.getElementById('modeArea');
+  if (mode.type === 'static') {
+    area.innerHTML = mode.html;
+  } else if (mode.type === 'stepper') {
+    area.innerHTML = '';
+    renderStepperInto(area, tab, mode);
+  } else if (mode.type === 'practice') {
+    area.innerHTML = practiceProblemHTML(mode.problemHTML);
+    var revealBtn = area.querySelector('#revealBtn');
+    var solWrap = area.querySelector('#solutionWrap');
+    revealBtn.onclick = function(){
+      if (solWrap.style.display === 'block') { solWrap.style.display='none'; revealBtn.textContent='Reveal step-by-step solution'; return; }
+      solWrap.style.display='block';
+      revealBtn.textContent='Hide solution';
+      curStep = 0;
+      renderStepperInto(solWrap, tab, mode);
+    };
+  }
+}
+
+renderAll();
+})();
+</script>
+</body>
+</html>
