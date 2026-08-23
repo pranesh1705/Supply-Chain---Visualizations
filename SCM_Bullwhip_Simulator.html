@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Ordering Simulation — SCM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#1b2a4a; --blue:#2f5aa8; --light:#eef2f8; --accent:#c0392b;
+    --green:#1e824c; --gray:#5a6472; --border:#d7dee8; --gold:#c9972f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--light); color:#23293a; margin:0; padding:0; line-height:1.5;
+  }
+  #app{max-width:920px; margin:0 auto; padding:0 20px 60px;}
+  header.top{
+    background:var(--navy); color:#fff; padding:16px 24px; margin:0 -20px 0;
+    display:flex; align-items:center; gap:14px;
+  }
+  .logo-badge{
+    width:auto; height:56px; border-radius:8px; background:#fff; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; padding:4px 8px;
+  }
+  .logo-badge img{height:100%; width:auto; display:block;}
+  header.top .titles h1{margin:0; font-size:1.25rem; font-weight:700;}
+  header.top .titles p{margin:3px 0 0; font-size:0.82rem; color:#c9d3e8;}
+  .studentbar{
+    display:none; background:#10192e; color:#dbe3f2; padding:9px 24px; margin:0 -20px 24px;
+    font-size:0.82rem; flex-wrap:wrap; gap:4px 22px; align-items:center;
+  }
+  .studentbar.show{display:flex;}
+  .studentbar b{color:#fff;}
+  .studentbar .costval{color:var(--gold); font-weight:700;}
+  #app > .screen{padding-top:20px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .card{
+    background:#fff; border:1px solid var(--border); border-radius:8px;
+    padding:22px 24px; margin-bottom:18px;
+  }
+  h2{font-size:1.15rem; color:var(--navy); margin-top:0;}
+  h3{font-size:1rem; color:var(--navy); margin-bottom:8px;}
+  h4{font-size:0.95rem; color:var(--navy); margin:0 0 4px;}
+  label{display:block; font-weight:600; font-size:0.88rem; margin-bottom:4px; color:#333;}
+  input[type=text], input[type=number], input[type=password]{
+    width:100%; padding:9px 10px; border:1px solid #b9c3d4; border-radius:5px; font-size:0.95rem;
+  }
+  .row{display:flex; gap:16px; flex-wrap:wrap;}
+  .row > div{flex:1; min-width:180px;}
+  button{
+    background:var(--blue); color:#fff; border:none; border-radius:5px;
+    padding:10px 18px; font-size:0.92rem; font-weight:600; cursor:pointer;
+  }
+  button:hover{background:#274a8c;}
+  button.secondary{background:#fff; color:var(--blue); border:1px solid var(--blue);}
+  button.secondary:hover{background:#eef2f8;}
+  button.linklike{background:none; color:var(--blue); border:none; padding:4px 0; font-weight:600; text-decoration:underline; font-size:0.83rem;}
+  button:disabled{background:#aab4c4; cursor:not-allowed;}
+  .btnbar{margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;}
+  .badge{
+    display:inline-block; background:var(--blue); color:#fff; font-size:0.75rem;
+    padding:3px 10px; border-radius:12px; font-weight:600; letter-spacing:0.3px;
+  }
+  table.info{width:100%; border-collapse:collapse; margin:14px 0;}
+  table.info td{padding:8px 10px; border-bottom:1px solid var(--border); font-size:0.92rem;}
+  table.info td.k{color:var(--gray); width:55%;}
+  table.info td.v{font-weight:700; text-align:right; color:var(--navy);}
+  .suggested{font-size:0.82rem; color:var(--gray); margin-top:6px;}
+  .feedback{
+    margin-top:14px; padding:12px 14px; border-radius:6px; background:#f4f7fb;
+    border-left:4px solid var(--blue); font-size:0.9rem; display:none;
+  }
+  .feedback.show{display:block;}
+  .progressbar{height:6px; background:#dde5f0; border-radius:3px; overflow:hidden; margin-bottom:16px;}
+  .progressbar > div{height:100%; background:var(--blue); transition:width .3s;}
+  .metrictable{width:100%; border-collapse:collapse; font-size:0.88rem;}
+  .metrictable th, .metrictable td{border:1px solid var(--border); padding:7px 9px; text-align:center;}
+  .metrictable th{background:#f4f7fb; color:var(--navy);}
+  textarea{
+    width:100%; min-height:80px; border:1px solid #b9c3d4; border-radius:5px;
+    padding:9px 10px; font-size:0.92rem; font-family:inherit;
+  }
+  .muted{color:var(--gray); font-size:0.88rem;}
+  .rolechip{
+    display:inline-block; background:var(--navy); color:#fff; padding:6px 14px;
+    border-radius:6px; font-weight:700; font-size:1rem; margin:6px 0;
+  }
+  canvas{max-width:100%;}
+  .note{background:#fff8e6; border:1px solid #f0d98a; border-radius:6px; padding:10px 14px; font-size:0.86rem; margin-top:10px;}
+  .warn{background:#fdecea; border:1px solid #f2b8b0; border-radius:6px; padding:10px 14px; font-size:0.86rem; margin-top:10px;}
+  .costbox{
+    display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 4px;
+  }
+  .costcell{
+    flex:1; min-width:130px; background:#f4f7fb; border:1px solid var(--border); border-radius:6px;
+    padding:10px 12px; text-align:center;
+  }
+  .costcell .lbl{font-size:0.76rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.4px;}
+  .costcell .val{font-size:1.15rem; font-weight:700; color:var(--navy); margin-top:2px;}
+  .chartswrap{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px;}
+  .chartswrap > div{flex:1; min-width:260px;}
+  .chartswrap h4{font-size:0.85rem; margin-bottom:6px;}
+  .lockbox{max-width:420px;}
+  .errmsg{color:var(--accent); font-size:0.85rem; margin-top:8px; display:none;}
+  .errmsg.show{display:block;}
+  .overridewrap{margin-top:18px; border-top:1px dashed var(--border); padding-top:12px;}
+  .overridepanel{display:none; background:#fdf3ee; border:1px solid #ecd2c4; border-radius:6px; padding:14px; margin-top:10px;}
+  .overridepanel.show{display:block;}
+  .overridepanel .row > div{min-width:140px;}
+  table.pipeline{width:100%; border-collapse:collapse; font-size:0.86rem; margin-top:6px;}
+  table.pipeline th, table.pipeline td{border:1px solid var(--border); padding:6px 8px; text-align:center;}
+  table.pipeline th{background:#f4f7fb;}
+  .assignbox{background:#eef2f8; border:1px solid var(--border); border-radius:6px; padding:14px 16px; margin:14px 0;}
+  .tabbar{display:flex; gap:4px; margin-top:14px; border-bottom:2px solid var(--border); flex-wrap:wrap;}
+  .tab-btn{background:none; color:var(--gray); border:none; border-bottom:3px solid transparent; border-radius:0; padding:8px 14px; font-weight:600; font-size:0.85rem; margin-bottom:-2px;}
+  .tab-btn:hover{background:#f4f7fb; color:var(--navy);}
+  .tab-btn.active{color:var(--navy); border-bottom-color:var(--blue);}
+  .tabpanel{display:none; padding-top:12px;}
+  .tabpanel.active{display:block;}
+  .promptbox{background:#f4f7fb; border:1px solid var(--border); border-radius:6px; padding:12px 14px; margin:10px 0 6px;}
+  .promptbox pre{white-space:pre-wrap; font-family:inherit; font-size:0.86rem; margin:0 0 10px; color:#23293a;}
+  .copybtn{margin-right:8px;}
+  .copied-msg{font-size:0.8rem; color:var(--green); font-weight:600; opacity:0; transition:opacity .2s;}
+  .copied-msg.show{opacity:1;}
+  .timenote{font-size:0.82rem; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);}
+  .togglegrid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+  @media (max-width:640px){ .togglegrid{grid-template-columns:1fr;} }
+  .togglecard{border:1px solid var(--border); border-radius:8px; padding:12px 14px; background:#fafcff;}
+  .togglecard.on{border-color:var(--green); background:#f2faf5;}
+  .togglecard label.switchlabel{display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:700; color:var(--navy); margin-bottom:6px;}
+  .togglecard input[type=checkbox]{width:18px; height:18px; margin:0;}
+  .togglecard p{margin:0; font-size:0.83rem; color:var(--gray);}
+  .causebox{background:#fdf3ee; border:1px solid #ecd2c4; border-radius:6px; padding:10px 14px; font-size:0.86rem; margin-top:10px;}
+  .costratebox{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .costratecell{flex:1; min-width:150px; background:#eef2f8; border:1px solid var(--border); border-radius:6px; padding:8px 12px;}
+  .costratecell .lbl{font-size:0.72rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.3px;}
+  .costratecell .val{font-size:1rem; font-weight:700; color:var(--navy); margin-top:1px;}
+  .promocard{background:#f2faf5; border:1px solid #bfe3cc; border-radius:8px; padding:14px 16px; margin:14px 0;}
+  .promocard h4{margin-top:0;}
+  .promo-option{background:#fff; border:1px solid var(--border); border-radius:6px; padding:10px 12px; margin-bottom:8px;}
+  .promo-option label{display:flex; align-items:center; gap:8px; font-weight:700; color:var(--navy); margin-bottom:4px;}
+  .promo-option p{margin:0; font-size:0.83rem; color:var(--gray);}
+  .promoresultbox{border-radius:6px; padding:12px 14px; margin:12px 0; font-size:0.92rem; border-width:2px; border-style:solid;}
+  .promoresultbox.success{background:#eaf7ee; border-color:#8fce9f;}
+  .promoresultbox.fail{background:#fdeceb; border-color:#eaa8a1;}
+  .promoresultbox .verdict{font-size:1rem; font-weight:800; display:block; margin-bottom:4px;}
+  .promoresultbox.success .verdict{color:#1e7a37;}
+  .promoresultbox.fail .verdict{color:#a3271c;}
+  .shortfallbanner{background:#fdf3e3; border:2px solid #edc477; border-radius:6px; padding:12px 14px; margin-bottom:14px; font-size:0.9rem;}
+  .shortfallbanner .headline{font-weight:800; color:#8a5a08; font-size:0.98rem; display:block; margin-bottom:4px;}
+  .info .formula-note{display:block; font-size:0.76rem; color:var(--gray); font-weight:400; margin-top:2px;}
+  .info td.k{line-height:1.4;}
+  .memobox{background:#fbfaf6; border:1px solid #ddd6c2; border-radius:8px; padding:14px 16px; margin-bottom:10px; font-size:0.86rem;}
+  .memobox .memohead{font-family:Georgia, 'Times New Roman', serif; border-bottom:1px solid #ddd6c2; padding-bottom:8px; margin-bottom:8px;}
+  .memobox .memohead .subj{font-weight:800; color:var(--navy); font-size:0.95rem;}
+  .memobox .memohead .meta{color:var(--gray); font-size:0.78rem; margin-top:2px;}
+  .memo-tier-row{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px dashed #e5e0d0;}
+  .memo-tier-row:last-child{border-bottom:none;}
+  .memo-tier-row .tname{font-weight:700; color:var(--navy);}
+  .memo-tier-row .modds{color:var(--gray);}
+  .memo-tier-row .mtrack{font-weight:700;}
+  .promo-option.selected{border-color:var(--navy); box-shadow:0 0 0 1px var(--navy);}
+  .tourwrap{display:flex; gap:22px; flex-wrap:wrap; margin-top:12px; align-items:flex-start;}
+  .tourmock{flex:1 1 380px; border:2px dashed var(--border); border-radius:10px; padding:16px; background:#fbfcfe; position:relative;}
+  .tourmock .mock-label{position:absolute; top:-11px; left:12px; background:#fbfcfe; padding:0 6px; font-size:0.7rem; color:var(--gray); font-weight:800; text-transform:uppercase; letter-spacing:.05em;}
+  .tourmock .mock-row{display:flex; align-items:flex-start; gap:8px; margin-bottom:10px;}
+  .tournum{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--blue); color:#fff; font-size:0.72rem; font-weight:800; flex:0 0 auto; margin-top:1px;}
+  .toursteps{flex:1 1 300px;}
+  .tourstep{display:flex; gap:10px; align-items:flex-start; margin-bottom:16px;}
+  .tourstep .tourtxt strong{display:block; color:var(--navy); font-size:0.92rem; margin-bottom:2px;}
+  .tourstep .tourtxt span{color:var(--gray); font-size:0.85rem; line-height:1.4;}
+  .mock-mini-table{width:100%; border-collapse:collapse; font-size:0.78rem; margin:2px 0;}
+  .mock-mini-table td{padding:4px 6px; border-bottom:1px solid var(--border);}
+  .mock-mini-table td.k{color:var(--gray);}
+  .mock-mini-table td.v{text-align:right; font-weight:700; color:var(--navy);}
+  .mock-btn{display:inline-block; background:var(--blue); color:#fff; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:6px; margin-right:6px;}
+  .mock-btn.secondary{background:#eef1f6; color:var(--navy);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="logo-badge">
+      <img id="gl-logo-img" alt="Great Lakes Institute of Management logo">
+    </div>
+    <div class="titles">
+      <h1>Supply Chain Ordering Simulation</h1>
+      <p>Great Lakes Institute of Management, Chennai &middot; Supply Chain Management &middot; Prof. Sandeep Srivathsan &amp; Prof. Pranesh Saisridhar</p>
+    </div>
+  </header>
+
+  <div class="studentbar" id="studentbar">
+    <span><b id="sb-name">—</b></span>
+    <span>Roll: <b id="sb-roll">—</b></span>
+    <span>Role: <b id="sb-role">—</b></span>
+    <span id="sb-setround">Round Set — · Round —</span>
+    <span>Cumulative cost: <span class="costval" id="sb-cost">₹0</span></span>
+  </div>
+
+  <!-- SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div class="card">
+      <h2>Before you start</h2>
+      <p class="muted">You will be randomly assigned one of four supply-chain roles based on your roll number. You will play that role for a series of rounds; the other three tiers are run automatically. Your objective is to manage your inventory as well as you can — you'll see exactly how that's measured on the next screen.</p>
+      <div class="row" style="margin-top:14px;">
+        <div>
+          <label for="in-name">Full name</label>
+          <input type="text" id="in-name" placeholder="e.g. Aditya Rao">
+        </div>
+        <div>
+          <label for="in-roll">Roll number</label>
+          <input type="text" id="in-roll" placeholder="e.g. PGP2026034">
+        </div>
+      </div>
+      <div class="btnbar">
+        <button id="btn-start">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROLE REVEAL -->
+  <div class="screen" id="screen-role">
+    <div class="card">
+      <h2>Your role</h2>
+      <p>Based on your roll number, you have been randomly assigned:</p>
+      <div class="rolechip" id="role-name"></div>
+      <p id="role-desc" class="muted" style="margin-top:10px;"></p>
+      <h3 style="margin-top:20px;">Your objective</h3>
+      <p class="muted">Every round costs you money in two ways: <strong>holding cost</strong> on any stock sitting unused in your warehouse, and <strong>backlog cost</strong> on any order you couldn't fulfil on time (backlog cost is charged at twice the rate of holding cost, since a stockout is more costly than a bit of extra stock). Your goal is to place orders that keep your <strong>total cost as low as possible</strong> across all rounds — not simply to avoid ever running short, and not simply to hoard stock either. You are optimizing your own tier's cost, not the whole chain's — exactly like a real manager would.</p>
+      <h3 style="margin-top:18px;">How this works</h3>
+      <ul class="muted" style="padding-left:20px;">
+        <li>Every round, you will see the order placed on you by the tier below (or true customer demand, if you are the Retailer), your current stock on hand, any backlog, and stock already on the way to you — shown both as numbers and as charts.</li>
+        <li>You decide how much to order from the tier above you. There is no hidden "correct" answer — order what you think keeps cost lowest.</li>
+        <li>Orders take time to arrive (the lead time) — just like a real supply chain.</li>
+        <li>Some real-world complications may apply this round set — watch for notes about minimum order quantities or delayed promotion information as you play.</li>
+        <li>You will play <strong id="rounds-per-set-note">20</strong> rounds, then your instructor will share a password to reveal your results and continue.</li>
+      </ul>
+      <div class="btnbar">
+        <button id="btn-begin-set1">Begin Round Set 1</button>
+        <button id="btn-watch-demo" class="secondary">See how the screen works first (optional, not graded)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WALKTHROUGH (non-graded, static tour of the play screen — no simulated data) -->
+  <div class="screen" id="screen-demo">
+    <div class="card">
+      <h2>How the round screen works</h2>
+      <p class="muted">This is just a tour of the screen you'll use every round — it uses made-up example numbers, not a simulation. Nothing here is graded or saved. When you're ready, go back and begin Round Set 1 for real.</p>
+
+      <div class="tourwrap">
+        <div class="tourmock">
+          <span class="mock-label">Example round screen</span>
+          <div class="mock-row"><span class="tournum">1</span>
+            <div style="flex:1;">
+              <div class="progressbar"><div style="width:35%"></div></div>
+              <span class="badge">Round Set 1</span>
+              <span class="badge" style="background:var(--gold); margin-left:6px;">Lead time: 2 round(s)</span>
+              <div style="font-weight:800; color:var(--navy); margin-top:6px;">Round 7 of 20</div>
+            </div>
+          </div>
+          <div class="mock-row"><span class="tournum">2</span>
+            <div style="flex:1; display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="mock-btn secondary">Holding ₹0.50/unit/round</span>
+              <span class="mock-btn secondary">Backlog ₹1.00/unit/round</span>
+              <span class="mock-btn secondary">Procurement ₹2.00/unit ordered</span>
+            </div>
+          </div>
+          <div class="mock-row"><span class="tournum">3</span>
+            <table class="mock-mini-table" style="flex:1;">
+              <tr><td class="k">Order placed on you this round</td><td class="v">14</td></tr>
+              <tr><td class="k">Received this round</td><td class="v">10</td></tr>
+              <tr><td class="k">Stock on hand</td><td class="v">6</td></tr>
+              <tr><td class="k">Your backlog</td><td class="v">4</td></tr>
+              <tr><td class="k">Stock in transit to you</td><td class="v">22</td></tr>
+              <tr><td class="k">Inventory position</td><td class="v">24</td></tr>
+            </table>
+          </div>
+          <div class="mock-row"><span class="tournum">4</span>
+            <div style="flex:1; font-size:0.8rem; color:var(--gray);">Shipments still on the way, receipts so far, and backlog history — one row gets added to each every round, so a few rounds in you'll have a running log to scroll back through.</div>
+          </div>
+          <div class="mock-row"><span class="tournum">5</span>
+            <div style="flex:1; font-size:0.8rem; color:var(--gray);">📈 Two small charts — your inventory position over time, and what's arriving soon.</div>
+          </div>
+          <div class="mock-row"><span class="tournum">6</span>
+            <div style="flex:1;">
+              <label style="font-size:0.8rem; color:var(--gray);">Your order to the tier above you (units)</label>
+              <div style="border:1px solid var(--border); border-radius:6px; padding:6px 10px; width:70px; font-weight:700; color:var(--navy); margin-top:2px;">12</div>
+            </div>
+          </div>
+          <div class="mock-row"><span class="tournum">7</span>
+            <div style="flex:1;">
+              <span class="mock-btn">Submit Order</span>
+              <span class="mock-btn secondary">Next Round →</span>
+            </div>
+          </div>
+          <div class="mock-row"><span class="tournum">8</span>
+            <div style="flex:1; background:#eef4ff; border-radius:6px; padding:8px 10px; font-size:0.78rem; color:var(--navy);">You ordered <strong>12</strong> units. Holding cost ₹3, backlog cost ₹4, procurement cost ₹24 — this round's total ₹31.</div>
+          </div>
+        </div>
+
+        <div class="toursteps">
+          <div class="tourstep"><span class="tournum">1</span><div class="tourtxt"><strong>Where you are</strong><span>The progress bar and round title show which round you're on out of 20 this set, and the current lead time.</span></div></div>
+          <div class="tourstep"><span class="tournum">2</span><div class="tourtxt"><strong>Your cost rates</strong><span>A constant reminder of what you're charged per round: holding unused stock, carrying backlog, and buying units. These don't change mid-round-set.</span></div></div>
+          <div class="tourstep"><span class="tournum">3</span><div class="tourtxt"><strong>This round's numbers</strong><span>What was ordered on you, what arrived, what's sitting in your warehouse, what you still owe (backlog), what's already on its way to you, and your overall inventory position.</span></div></div>
+          <div class="tourstep"><span class="tournum">4</span><div class="tourtxt"><strong>Your running history</strong><span>Three tables build up round after round — shipments en route, everything you've received, and your backlog over time — so you can look back and spot a pattern.</span></div></div>
+          <div class="tourstep"><span class="tournum">5</span><div class="tourtxt"><strong>Charts</strong><span>The same history, plotted, in case a picture makes the trend easier to see than the tables do.</span></div></div>
+          <div class="tourstep"><span class="tournum">6</span><div class="tourtxt"><strong>Place your order</strong><span>Type how many units you want to order from the tier above you. There's no hidden correct number — decide based on what you're seeing.</span></div></div>
+          <div class="tourstep"><span class="tournum">7</span><div class="tourtxt"><strong>Submit, then advance</strong><span>Click Submit Order to lock it in. The Next Round button then appears — click it once you've read the feedback below.</span></div></div>
+          <div class="tourstep"><span class="tournum">8</span><div class="tourtxt"><strong>Feedback</strong><span>Right after you submit, you'll see exactly what that order cost you this round, broken into holding, backlog, and procurement cost.</span></div></div>
+          <div class="tourstep"><span class="tournum">↻</span><div class="tourtxt"><strong>Repeat</strong><span>That loop — read the numbers, decide, submit, read feedback, click Next Round — is the whole game. After round 20, you'll hit a password screen to reveal your results.</span></div></div>
+        </div>
+      </div>
+
+      <div class="btnbar">
+        <button id="btn-demo-back">Back — I'm ready to begin Round Set 1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAY -->
+  <div class="screen" id="screen-play">
+    <div class="card">
+      <div class="progressbar"><div id="progress-fill" style="width:0%"></div></div>
+      <span class="badge" id="set-label">Round Set 1</span>
+      <span class="badge" id="leadtime-badge" style="background:var(--gold); margin-left:6px;">Lead time: — round(s)</span>
+      <h2 id="round-title" style="margin-top:10px;">Round 1 of 20</h2>
+
+      <div class="costratebox" id="cost-rate-box"></div>
+
+      <div id="cause-notes"></div>
+      <div id="shortfall-banner" class="shortfallbanner" style="display:none;"></div>
+      <table class="info" id="info-table"></table>
+
+      <div id="promo-block" style="display:none;"></div>
+
+      <h4>Shipments still on the way to you</h4>
+      <table class="pipeline" id="pipeline-table"></table>
+
+      <h4>Receipts so far (every round, not just the latest)</h4>
+      <table class="pipeline" id="receipts-table"></table>
+
+      <h4>Your backlog history (every round, not just the latest)</h4>
+      <table class="pipeline" id="backlog-history-table"></table>
+
+      <h4>Promotions so far (running list, updated every round)</h4>
+      <table class="pipeline" id="promo-history-table"></table>
+
+      <div class="chartswrap">
+        <div>
+          <h4>Your inventory position over time</h4>
+          <canvas id="chart-position" height="180"></canvas>
+        </div>
+        <div>
+          <h4>Shipments arriving soon</h4>
+          <canvas id="chart-pipeline" height="180"></canvas>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label for="order-input">Your order to the tier above you (units)</label>
+        <input type="number" id="order-input" min="0" step="1" value="0">
+        <p class="suggested" id="order-hint"></p>
+      </div>
+      <div class="btnbar">
+        <button id="btn-submit-order">Submit Order</button>
+        <button id="btn-next-round" class="secondary" style="display:none;">Next Round →</button>
+      </div>
+      <div class="feedback" id="feedback-box"></div>
+    </div>
+  </div>
+
+  <!-- LOCK SCREEN: reveals results, single password -->
+  <div class="screen" id="screen-lock1">
+    <div class="card lockbox">
+      <h2>Round Set 1 complete</h2>
+      <p class="muted">Ask your instructor for the password to view your results.</p>
+      <label for="lock1-password">Password</label>
+      <input type="password" id="lock1-password">
+      <p class="errmsg" id="lock1-err">Incorrect password. Please try again.</p>
+      <div class="btnbar">
+        <button id="btn-lock1-submit">Unlock results</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SET RESULTS -->
+  <div class="screen" id="screen-results">
+    <div class="card">
+      <h2 id="results-title">Round Set 1 results</h2>
+      <div class="costbox" id="results-costbox"></div>
+      <div class="note" id="bullwhip-ratio-explain" style="margin-top:0;"></div>
+      <div class="chartswrap">
+        <div style="flex:1 1 100%;">
+          <h4>Orders placed by every tier</h4>
+          <canvas id="chart-set" height="220"></canvas>
+        </div>
+      </div>
+      <div class="chartswrap">
+        <div>
+          <h4>Your cumulative cost over time</h4>
+          <canvas id="chart-cost" height="200"></canvas>
+        </div>
+      </div>
+      <table class="metrictable" id="metrics-table" style="margin-top:16px;"></table>
+
+      <div style="margin-top:22px;">
+        <h4>Full chain history — every tier, this round set</h4>
+        <p class="muted">Every tier's order history, minimum-order-quantity hits, and promotion events (Retailer only) for this round set — useful for diagnosing what actually happened at each link in the chain, not just your own.</p>
+        <div class="tabwrap" id="chainhist-tabwrap">
+          <div class="tabbar" id="chainhist-tabbar"></div>
+          <div id="chainhist-panels"></div>
+        </div>
+      </div>
+
+      <div class="btnbar">
+        <button id="btn-download-set1" class="secondary">Download Round Set 1 Report (.txt)</button>
+        <button id="btn-download-set1-pdf" class="secondary">Download Round Set 1 Report (PDF)</button>
+        <button id="btn-goto-reflect">Continue to Reflection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL REFLECTION: students write up their own diagnosis before any AI tool is involved -->
+  <div class="screen" id="screen-reflect">
+    <div class="card">
+      <h2>Before you ask any AI tool — write your own diagnosis first</h2>
+      <div class="shortfallbanner" id="reflect-override-banner" style="display:none;">
+        <span class="headline">Instructor override</span>
+        You've been brought back here to fill in what you missed. Click Continue below when you're done — you'll go straight back to the AI-analysis stage without needing the password again.
+      </div>
+      <p class="muted">Answer these in your own words, based only on what you personally experienced and what you see in your report above. There are no AI prompts on this screen — this is your own thinking, on the record, before any outside help.</p>
+      <div>
+        <label for="ta-reflect-role">What was your role, and what was your objective in that role?</label>
+        <textarea id="ta-reflect-role"></textarea>
+      </div>
+      <div style="margin-top:14px;">
+        <label for="ta-reflect-actions">What did you actually do, round by round? Describe your ordering strategy and how (if at all) it changed as the game went on.</label>
+        <textarea id="ta-reflect-actions"></textarea>
+      </div>
+      <div style="margin-top:14px;">
+        <label for="ta-reflect-observe">What do you observe in your report — the pattern in your orders versus true demand, your cost, your backlog? What do you think caused it, and why?</label>
+        <textarea id="ta-reflect-observe"></textarea>
+      </div>
+      <div class="btnbar">
+        <button id="btn-reflect-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCK SCREEN 2: gates the NotebookLM stage -->
+  <div class="screen" id="screen-lock2">
+    <div class="card lockbox">
+      <h2>Reflection recorded</h2>
+      <p class="muted">Ask your instructor for the password to move on to the AI-analysis stage.</p>
+      <label for="lock2-password">Password</label>
+      <input type="password" id="lock2-password">
+      <p class="errmsg" id="lock2-err">Incorrect password. Please try again.</p>
+      <div class="btnbar">
+        <button id="btn-lock2-submit">Unlock NotebookLM stage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTEBOOKLM STAGE -->
+  <div class="screen" id="screen-notebooklm">
+    <div class="card">
+      <h2>Now compare your diagnosis against NotebookLM's</h2>
+      <p class="muted">Upload your downloaded Round Set 1 report and the Hau Lee reading as two sources in NotebookLM, then paste the prompt below (it already includes the manual diagnosis you just wrote — NotebookLM has not been told any of the textbook causes, so its answer is its own independent read of your data).</p>
+      <div class="promptbox">
+        <pre id="prompt-notebooklm"></pre>
+        <button type="button" class="secondary copybtn" id="btn-copy-notebooklm">Copy prompt</button>
+        <span class="copied-msg" id="copied-notebooklm">Copied!</span>
+      </div>
+      <div style="margin-top:14px;">
+        <label for="ta-notebooklm-output">Paste NotebookLM's report/response here</label>
+        <textarea id="ta-notebooklm-output" style="min-height:140px;"></textarea>
+      </div>
+      <div style="margin-top:14px;">
+        <label for="ta-notebooklm-compare">Now compare: where did NotebookLM's diagnosis match or differ from the diagnosis you wrote before using it? What did it catch that you missed, or vice versa?</label>
+        <textarea id="ta-notebooklm-compare"></textarea>
+      </div>
+      <div class="btnbar">
+        <button id="btn-download-notebooklm-report">Download Full Diagnosis Report (.txt)</button>
+        <button id="btn-download-notebooklm-report-pdf" class="secondary">Download Full Diagnosis Report (PDF)</button>
+      </div>
+      <p class="muted" style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--border);">That's the end of today's in-class activity.</p>
+
+      <div style="margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);">
+        <button type="button" id="btn-override-toggle" class="secondary">Missed your reflection? (instructor override)</button>
+        <div id="override-box" style="display:none; margin-top:10px; max-width:360px;">
+          <label for="override-password">Instructor password</label>
+          <input type="password" id="override-password">
+          <p class="errmsg" id="override-err">Incorrect password. Please try again.</p>
+          <div class="btnbar">
+            <button type="button" id="btn-override-submit">Go back and fill in reflection</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= CONFIGURATION — instructor can edit these before class ================= */
+/* NOTE: this is a static, client-side-only file with no server. These "passwords" are a
+   classroom-pacing tool (so the whole class reveals results / starts the fix-it stage together),
+   not real security — anyone who views the page source can read them. */
+const PASSWORD_RESULTS    = "bullwhipGLIM";
+const PASSWORD_NOTEBOOKLM = "GLIMSCM_rocks";
+const ROUNDS_PER_SET = 20;
+
+/* ================= LOGO (embedded, Great Lakes Chennai) ================= */
+const GL_LOGO_B64 = "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";
+document.getElementById("gl-logo-img").src = "data:image/png;base64," + GL_LOGO_B64;
+
+/* ================= ENGINE (v5) ================= */
+/* ================= ENGINE (v5, final) ================= */
+const TIERS = ["Retailer", "Wholesaler", "Distributor", "Factory"];
+const ALPHA = 0.35;
+const HOLDING_RATE = 0.5;
+const BACKLOG_RATE = 1.0;
+const BLEND_WEIGHT = 0.5;
+const PROCUREMENT_RATE = 2.0; // material/procurement cost, Rs per unit ORDERED (new cost, per Pranesh's request)
+const MOQ_ROUNDS_LIMIT = 10;  // MOQ only applies for rounds 1-10 (0-indexed round < 10), then lifts
+const REGULAR_PRICE = 10;     // Rs per unit sold at the Retailer, non-promo
+const PROMO_MAX_USES = 3;     // Retailer may offer a promotion in at most 3 rounds total
+const AUTO_PROMO_ROUNDS = [4, 9, 14]; // 0-indexed rounds (Round 5, 10, 15) -- when the Retailer is
+                               // automated (the human plays another tier), it still needs to run its
+                               // own promotions on this fixed schedule so upstream tiers experience the
+                               // same real-world complication a human Retailer could introduce. Fixed,
+                               // not random, so the effect is reproducible across students/roles.
+const FACTORY_CAP = 40;       // Factory's hard production/shipping cap, units/round -- the ONLY artificial
+                               // capacity ceiling in the model. Every other tier is limited only by its own
+                               // on-hand stock, never by an arbitrary cap. Real backorders now possible:
+                               // any unmet request becomes backlog, carried forward until stock allows.
+                               // Sized (via Node verification against the bad-baseline vs. all-remedies
+                               // configs) so bad-baseline play produces a real, visible, recoverable
+                               // backlog spike (~18 units peak) while the all-remedies run fully clears
+                               // its backlog to 0 by round 20 -- a cap of 25 left ~85-unit backlog even
+                               // under all remedies, which didn't show a convincing before/after contrast.
+
+/* "Industry report" promo tiers -- the Retailer's actual choice. Each tier's outcome is drawn
+   probabilistically each time it's used (see resolvePromotion), so the report's stated odds are
+   literally what governs the draw, not flavor text. Demand lift/price cut apply only to the Retailer's
+   OWN sales that round; whether it nets a revenue GAIN depends on whether the draw succeeds. */
+const PROMO_TIERS = {
+  small:  { label: "10% discount", discountPct: 0.10, successProb: 0.70, liftRange: [0.15, 0.25], failLiftRange: [-0.05, 0.05],
+            reportText: "Industry data: a 10% discount has led to a 15-25% demand lift about 70% of the time; the rest of the time demand barely moves, so the discount alone is a net loss." },
+  medium: { label: "20% discount", discountPct: 0.20, successProb: 0.60, liftRange: [0.30, 0.45], failLiftRange: [-0.05, 0.10],
+            reportText: "Industry data: a 20% discount has led to a 30-45% demand lift about 60% of the time; the other 40% of the time, demand rises only slightly and the deeper discount isn't recovered." },
+  large:  { label: "30% discount", discountPct: 0.30, successProb: 0.50, liftRange: [0.50, 0.70], failLiftRange: [0.00, 0.15],
+            reportText: "Industry data: a 30% discount has led to a 50-70% demand lift only about 50% of the time -- a coin flip. When it doesn't land, the demand lift is much smaller and doesn't offset the price cut." }
+};
+function resolvePromotion(tierKey, baselineDemand) {
+  const tier = PROMO_TIERS[tierKey];
+  const success = Math.random() < tier.successProb;
+  const range = success ? tier.liftRange : tier.failLiftRange;
+  const liftFrac = range[0] + Math.random() * (range[1] - range[0]);
+  const demand = Math.max(0, Math.round(baselineDemand * (1 + liftFrac)));
+  const promoPrice = REGULAR_PRICE * (1 - tier.discountPct);
+  const revenueWithPromo = demand * promoPrice;
+  const revenueWithoutPromo = baselineDemand * REGULAR_PRICE;
+  return {
+    tierKey, label: tier.label, discountPct: tier.discountPct, success, liftFrac,
+    demand, price: promoPrice, revenueWithPromo, revenueWithoutPromo,
+    revenueDelta: revenueWithPromo - revenueWithoutPromo
+  };
+}
+
+/* FROZEN baseline true-demand curve (0-indexed round number `round`, so round 4 = "Round 5" on screen):
+   Rounds 1-4  (idx 0-3):  4 units/round
+   Rounds 5-15 (idx 4-14): 8 units/round (a genuine, sustained step-up -- not a spike-and-return)
+   Rounds 16-20 (idx 15-19): 6 units/round
+   This is the ONLY source of demand variation in the base world. Any promotional demand on top of
+   this baseline comes exclusively from the Retailer's own promotion decisions (see PROMO_TIERS /
+   resolvePromotion), never from an ambient scripted event. */
+function trueDemand(round) {
+  if (round <= 3) return 4;         // rounds 1-4
+  if (round <= 14) return 8;        // rounds 5-15
+  return 6;                          // rounds 16-20
+}
+class BullwhipEngine {
+  constructor(cfg, humanTierIdx) {
+    // cfg: { infoSharing, leadTime, batching, pricing, moq, promoInfoDelay }
+    // cfg.pricing: "edlp" disables the Retailer promotion option entirely this round set (a genuine
+    // Fix-It remedy: "we've committed to stable pricing"). Any other value (e.g. "promotional",
+    // the default) means the Retailer MAY choose to run a promotion in up to PROMO_MAX_USES rounds.
+    this.cfg = { moq: 0, promoInfoDelay: 0, ...cfg };
+    this.humanTierIdx = humanTierIdx;
+    this.state = TIERS.map(() => ({ onHand: 12, backlog: 0, pipeline: [], prevPlaced: 4 }));
+    this.round = 0;
+    this.history = TIERS.map(() => []);
+    this.demandHistory = [];
+    this.trueDemandFullHistory = [];
+    this.promoRoundsHistory = []; // true/false per round -- was a promotion actually run this round?
+    this.promoOutcomeLog = []; // { round, tierKey, success, revenueDelta } for every resolved promotion this set -- this player's own track record
+    this.moqHistory = TIERS.map(() => []); // per tier, per round: true if MOQ rounding actually changed that tier's order this round
+    this.costHistory = TIERS.map(() => []);
+    this.procurementCostHistory = TIERS.map(() => []);
+    this.promosUsed = 0;
+    this._pending = null;
+    this._queuedPromo = null;
+  }
+  _signal(i, incoming, td) {
+    if (this.cfg.infoSharing) return td;
+    // Delayed promo visibility: only kicks in for upstream tiers (Distributor=2, Factory=3) in rounds
+    // where a promotion actually ran recently (tracked via promoRoundsHistory), not as a blanket
+    // per-round condition -- this now correctly reflects that promotions are occasional, player-driven
+    // events rather than an always-on background wobble.
+    if (this.cfg.pricing !== "edlp" && i >= 2 && this.cfg.promoInfoDelay > 0) {
+      const anyRecentPromo = this.promoRoundsHistory.some((wasPromo, rd) => wasPromo && (this.round - rd) <= this.cfg.promoInfoDelay + 2 && (this.round - rd) >= 0);
+      if (anyRecentPromo) {
+        const delay = this.cfg.promoInfoDelay;
+        const lagRound = Math.max(0, this.round - delay);
+        const laggedTd = this.trueDemandFullHistory[lagRound] !== undefined ? this.trueDemandFullHistory[lagRound] : incoming;
+        return BLEND_WEIGHT * laggedTd + (1 - BLEND_WEIGHT) * incoming;
+      }
+    }
+    return incoming;
+  }
+  _computeTierOrder(i, incoming, td) {
+    // Real stockout/backorder model: a tier can only ship what it actually has on hand, plus (for the
+    // Factory only) a hard per-round production cap. Anything it can't cover becomes backlog, carried
+    // forward and cleared as stock allows -- this is the classic beer-game treatment, restored per
+    // Pranesh's explicit decision after reviewing the earlier no-stockout simplification. Only the
+    // Factory (i === 3) has an artificial capacity ceiling; the other tiers are limited only by their
+    // own on-hand stock, never by an arbitrary cap.
+    const need = incoming + this.state[i].backlog;
+    const availableStock = Math.max(0, this.state[i].onHand);
+    let shipQty = Math.min(need, availableStock);
+    const cappedByFactory = i === 3 && shipQty > FACTORY_CAP;
+    if (i === 3) shipQty = Math.min(shipQty, FACTORY_CAP);
+    shipQty = Math.max(0, shipQty);
+    this.state[i].onHand -= shipQty;
+    this.state[i].backlog = need - shipQty;
+    let shortfallReason = null;
+    if (shipQty < need) shortfallReason = cappedByFactory ? "factory_cap" : "stock";
+    if (i > 0) this.state[i - 1].pipeline.push({ arriveRound: this.round + this.cfg.leadTime, qty: shipQty, owed: need, shortfallReason });
+
+    const signal = this._signal(i, incoming, td);
+    const pipelineQty = this.state[i].pipeline.reduce((s, p) => s + p.qty, 0);
+    const position = this.state[i].onHand + pipelineQty - this.state[i].backlog;
+    const target = signal * this.cfg.leadTime + 2;
+    const desired = Math.max(0, target - position);
+    let placed;
+    if (this.cfg.batching) {
+      if (this.round % 2 === 0) {
+        const batchTarget = signal * (this.cfg.leadTime + 1) + 2;
+        const batchDesired = Math.max(0, batchTarget - position) * 2;
+        placed = this.state[i].prevPlaced + ALPHA * (batchDesired - this.state[i].prevPlaced);
+      } else {
+        placed = 0;
+      }
+    } else {
+      placed = this.state[i].prevPlaced + ALPHA * (desired - this.state[i].prevPlaced);
+    }
+    placed = Math.max(0, placed);
+
+    let moqFired = false;
+    if (this.cfg.moq && this.cfg.moq > 1 && this.round < MOQ_ROUNDS_LIMIT) {
+      const preRound = placed;
+      placed = Math.ceil(Math.max(placed, 0.001) / this.cfg.moq) * this.cfg.moq;
+      moqFired = Math.round(placed) !== Math.round(preRound);
+    }
+    this.moqHistory[i].push(moqFired);
+
+    this.state[i].prevPlaced = placed;
+    placed = Math.round(placed);
+    this.history[i].push(placed);
+    if (i === 3) {
+      this.state[3].pipeline.push({ arriveRound: this.round + this.cfg.leadTime, qty: placed });
+    }
+    return placed;
+  }
+  /* When the Retailer is automated (the human is playing a different tier), nothing else ever calls
+     queuePromotion() for it -- without this, an automated Retailer would NEVER run a promotion, and
+     every other tier would go a whole round set without ever seeing the discount-driven demand spikes
+     the cause-notes warn them about. This mirrors that human choice on a fixed schedule instead. */
+  _autoRetailerPromotionIfNeeded(r) {
+    if (this.humanTierIdx === 0) return;
+    if (this.cfg.pricing === "edlp") return;
+    if (this.promosUsed >= PROMO_MAX_USES) return;
+    if (this._queuedPromo) return;
+    if (!AUTO_PROMO_ROUNDS.includes(r)) return;
+    const keys = Object.keys(PROMO_TIERS);
+    const tierKey = keys[Math.floor(Math.random() * keys.length)];
+    this.queuePromotion(tierKey);
+  }
+  beginRound() {
+    const r = this.round;
+    this._autoRetailerPromotionIfNeeded(r);
+    let td = trueDemand(r);
+    const baselineTd = td;
+    let promoInfo = null;
+    // Retailer-only promotion decision happens via a separate call (offerPromotion) BEFORE beginRound
+    // finishes resolving demand for this round -- see resolvePendingPromotion(), called by the UI layer
+    // right before beginRound if the Retailer chose to run one this round. If a promo was queued, apply it.
+    if (this._queuedPromo) {
+      const resolved = resolvePromotion(this._queuedPromo.tierKey, baselineTd);
+      td = resolved.demand;
+      promoInfo = { ...this._queuedPromo, ...resolved, baselineDemand: baselineTd };
+      this.promosUsed++;
+      this.promoOutcomeLog.push({ round: r, tierKey: resolved.tierKey, label: resolved.label, success: resolved.success, revenueDelta: resolved.revenueDelta });
+      this._queuedPromo = null;
+    }
+    this.trueDemandFullHistory[r] = td;
+    this.promoRoundsHistory[r] = !!promoInfo;
+    let humanReceivedThisRound = 0;
+    let humanOwedThisRound = 0;
+    let humanShortfallReasonThisRound = null;
+    for (let i = 0; i < 4; i++) {
+      const arriving = this.state[i].pipeline.filter(p => p.arriveRound === r);
+      const qty = arriving.reduce((s, p) => s + p.qty, 0);
+      this.state[i].onHand += qty;
+      this.state[i].pipeline = this.state[i].pipeline.filter(p => p.arriveRound !== r);
+      if (i === this.humanTierIdx) {
+        humanReceivedThisRound = qty;
+        humanOwedThisRound = arriving.reduce((s, p) => s + (p.owed !== undefined ? p.owed : p.qty), 0);
+        const shortfallEntry = arriving.find(p => p.shortfallReason);
+        humanShortfallReasonThisRound = shortfallEntry ? shortfallEntry.shortfallReason : null;
+      }
+    }
+    let incoming = td;
+    for (let i = 0; i < this.humanTierIdx; i++) incoming = this._computeTierOrder(i, incoming, td);
+    const hi = this.humanTierIdx;
+    const pipelineQty = this.state[hi].pipeline.reduce((s, p) => s + p.qty, 0);
+    const position = this.state[hi].onHand + pipelineQty - this.state[hi].backlog;
+    const pipelineDetail = this.state[hi].pipeline
+      .map(p => ({ inRounds: p.arriveRound - r, qty: p.qty }))
+      .sort((a, b) => a.inRounds - b.inRounds);
+    this._pending = { td, incoming, promoInfo };
+    let moqHint = null;
+    if (this.cfg.moq && this.cfg.moq > 1 && r < MOQ_ROUNDS_LIMIT) moqHint = this.cfg.moq;
+    return {
+      round: r, trueDemandVisible: this.cfg.infoSharing ? td : null, incomingOrder: incoming,
+      onHand: Math.round(this.state[hi].onHand * 100) / 100,
+      backlog: Math.round(this.state[hi].backlog * 100) / 100,
+      pipelineQty, pipelineDetail, position: Math.round(position * 100) / 100,
+      receivedThisRound: humanReceivedThisRound, owedThisRound: humanOwedThisRound,
+      shortfallReason: humanShortfallReasonThisRound, leadTime: this.cfg.leadTime,
+      moqHint, promoInfo, promosRemaining: Math.max(0, PROMO_MAX_USES - this.promosUsed),
+      canOfferPromo: hi === 0 && this.cfg.pricing !== "edlp" && this.promosUsed < PROMO_MAX_USES
+    };
+  }
+  /* Called by the UI, only for the Retailer, BEFORE beginRound(), if they choose to run a promotion
+     this round. Queues it so beginRound() applies it when computing this round's true demand. */
+  queuePromotion(tierKey) {
+    this._queuedPromo = { tierKey };
+  }
+  submitRound(humanOrderQtyRaw) {
+    const r = this.round;
+    const { td, incoming, promoInfo } = this._pending;
+    const hi = this.humanTierIdx;
+    // Same real stockout/backorder rule as _computeTierOrder: the human tier can only ship what it has
+    // on hand (plus the Factory-only production cap, if hi === 3). Any shortfall becomes their own
+    // backlog, owed to the tier below them, cleared as stock allows in later rounds.
+    const need = incoming + this.state[hi].backlog;
+    const availableStock = Math.max(0, this.state[hi].onHand);
+    let shipQty = Math.min(need, availableStock);
+    const cappedByFactory = hi === 3 && shipQty > FACTORY_CAP;
+    if (hi === 3) shipQty = Math.min(shipQty, FACTORY_CAP);
+    shipQty = Math.max(0, shipQty);
+    this.state[hi].onHand -= shipQty;
+    this.state[hi].backlog = need - shipQty;
+    let humanShortfallReason = null;
+    if (shipQty < need) humanShortfallReason = cappedByFactory ? "factory_cap" : "stock";
+    if (hi > 0) this.state[hi - 1].pipeline.push({ arriveRound: r + this.cfg.leadTime, qty: shipQty, owed: need, shortfallReason: humanShortfallReason });
+
+    let humanOrderQty = Math.max(0, humanOrderQtyRaw);
+    let moqAdjusted = false;
+    if (this.cfg.moq && this.cfg.moq > 1 && r < MOQ_ROUNDS_LIMIT && humanOrderQty > 0) {
+      const rounded = Math.ceil(humanOrderQty / this.cfg.moq) * this.cfg.moq;
+      if (rounded !== humanOrderQty) moqAdjusted = true;
+      humanOrderQty = rounded;
+    }
+    const placed = Math.max(0, Math.round(humanOrderQty));
+    this.history[hi].push(placed);
+    this.moqHistory[hi].push(moqAdjusted);
+    if (hi === 3) {
+      this.state[3].pipeline.push({ arriveRound: r + this.cfg.leadTime, qty: placed });
+    }
+    let nextIncoming = placed;
+    for (let k = hi + 1; k < 4; k++) nextIncoming = this._computeTierOrder(k, nextIncoming, td);
+    this.demandHistory.push(td);
+
+    // Procurement/material cost: charged to the tier that just placed an order, proportional to units ordered.
+    const humanProcurementCost = placed * PROCUREMENT_RATE;
+    // Revenue: only the Retailer (tier 0) sells to an end customer and earns revenue this round.
+    let humanRevenue = 0;
+    if (hi === 0) {
+      humanRevenue = promoInfo ? promoInfo.demand * promoInfo.price : td * REGULAR_PRICE;
+    }
+
+    let systemHolding = 0, systemBacklog = 0;
+    for (let i = 0; i < 4; i++) {
+      // Holding cost applies to on-hand stock. Under the real stockout/backorder model, onHand should
+      // never actually go negative (shipQty is capped at available on-hand in _computeTierOrder /
+      // submitRound) -- the Math.max(0, ...) guard here is now just defensive.
+      const holding = Math.max(0, this.state[i].onHand) * HOLDING_RATE;
+      const backlogCost = this.state[i].backlog * BACKLOG_RATE;
+      const procurement = i === hi ? humanProcurementCost : 0;
+      const total = holding + backlogCost + procurement;
+      const prevCum = this.costHistory[i].length ? this.costHistory[i][this.costHistory[i].length - 1].cumTotal : 0;
+      this.costHistory[i].push({
+        holding: Math.round(holding * 100) / 100, backlog: Math.round(backlogCost * 100) / 100,
+        procurement: Math.round(procurement * 100) / 100, total: Math.round(total * 100) / 100,
+        cumTotal: Math.round((prevCum + total) * 100) / 100
+      });
+      systemHolding += holding; systemBacklog += backlogCost;
+    }
+    this.round++;
+    return {
+      round: r, trueDemand: td, placedOrders: TIERS.map((_, idx) => this.history[idx][r]),
+      humanCost: this.costHistory[hi][r], humanRevenue: Math.round(humanRevenue * 100) / 100,
+      humanOnHandAfter: Math.round(this.state[hi].onHand * 100) / 100,
+      humanBacklogAfter: Math.round(this.state[hi].backlog * 100) / 100,
+      humanPositionAfter: Math.round((this.state[hi].onHand + this.state[hi].pipeline.reduce((s, p) => s + p.qty, 0) - this.state[hi].backlog) * 100) / 100,
+      systemCostThisRound: Math.round((systemHolding + systemBacklog) * 100) / 100,
+      moqAdjusted, moqRoundedTo: placed, promoInfo
+    };
+  }
+  isDone(totalRounds) { return this.round >= totalRounds; }
+}
+
+function amplitude(series) { return Math.max(...series) - Math.min(...series); }
+function variance(series) {
+  const m = series.reduce((a, b) => a + b, 0) / series.length;
+  return series.reduce((s, x) => s + (x - m) * (x - m), 0) / series.length;
+}
+function bullwhipRatio(orderSeries, demandSeries) {
+  const vd = variance(demandSeries);
+  if (vd === 0) return null;
+  return Math.round((variance(orderSeries) / vd) * 100) / 100;
+}
+
+
+const ROLE_DESC = {
+  Retailer: "You sell directly to the end customer. You see true customer demand every round and decide how much to order from the Wholesaler.",
+  Wholesaler: "You supply the Retailer. You only see the order the Retailer places on you (unless information sharing is switched on) and decide how much to order from the Distributor.",
+  Distributor: "You supply the Wholesaler. You only see the order the Wholesaler places on you and decide how much to order from the Factory.",
+  Factory: "You are the manufacturer. You only see the order the Distributor places on you and decide how much to produce/order for the next round."
+};
+
+/* Round Set 1: baseline "bad" conditions -- all causes present. */
+const BASELINE_CFG = {
+  infoSharing: false, leadTime: 2, batching: true, pricing: "promotional",
+  moq: 5, promoInfoDelay: 3
+};
+
+function causeNotesFor(cfg) {
+  const notes = [];
+  if (cfg.moq && cfg.moq > 1) notes.push("A minimum order quantity of <strong>" + cfg.moq + " units</strong> applies for rounds 1-" + MOQ_ROUNDS_LIMIT + " only — any order you place in that window will be rounded UP to the nearest multiple of " + cfg.moq + ". This is lifted for the remaining rounds.");
+  if (cfg.pricing === "edlp") notes.push("Stable everyday pricing is in effect this round set — the Retailer will not be offered the option to run a promotion.");
+  else if (cfg.promoInfoDelay > 0) notes.push("If the Retailer runs a promotion this round set, upstream tiers (Distributor, Factory) won't fully learn about it until roughly <strong>" + cfg.promoInfoDelay + " rounds (~" + cfg.promoInfoDelay + " weeks)</strong> after it happened.");
+  return notes;
+}
+
+function hashRoll(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/* ================= AI-TOOL PROMPTS ================= */
+/* NOTE: deliberately does NOT name any cause of the Bullwhip Effect (no "demand signal processing",
+   "batching", etc.) -- the whole point of this stage is that NotebookLM has to work out what's going
+   on from the data itself, exactly like the student had to. It also folds in the student's own
+   from-scratch diagnosis (written on the reflection screen, before any AI tool was used) so NotebookLM
+   is explicitly asked to engage with that diagnosis rather than produce a generic answer in a vacuum. */
+function notebookLMPromptText() {
+  const myDiagnosis = [
+    "My role: " + (S.reflectionRole || "(not answered)"),
+    "What I did: " + (S.reflectionActions || "(not answered)"),
+    "What I observed and my own diagnosis: " + (S.reflectionObserve || "(not answered)")
+  ].join("\n");
+  return "I've uploaded two sources: (1) my Round Set 1 report from a supply chain ordering simulation, and (2) the Hau Lee, Padmanabhan and Whang article on the Bullwhip Effect in Supply Chains. Using only these two sources:\n" +
+    "1. Describe the pattern in my order data compared to true customer demand, citing specific rounds.\n" +
+    "2. Based on the article and my data, identify and explain what is actually driving this pattern in MY data specifically -- don't just list generic Bullwhip Effect causes, tell me which ones your evidence says are actually at work here, and cite the specific rounds/numbers that support each one.\n" +
+    "3. Here is my own manual diagnosis, written BEFORE I used any AI tool -- please directly critique, confirm, or extend it rather than ignoring it:\n" + myDiagnosis + "\n" +
+    "4. Based specifically on what you found in #2 and #3 -- not generic textbook advice -- recommend concrete actions within the context of THIS simulation that would help fix the pattern you identified. For each driver you found, name the specific lever actually available in this game (e.g. what information is shared between tiers, how and when orders are placed, how order quantities are rounded, or how promotions are communicated upstream) and explain why acting on it would address that specific driver.";
+}
+
+/* ================= APP STATE & UI ================= */
+const S = {
+  name: "", roll: "", roleIdx: 0, role: "",
+  sets: [], engine: null, setLabel: "",
+  reflectionRole: "", reflectionActions: "", reflectionObserve: "",
+  notebookLMOutput: "", notebookLMCompare: "",
+  curSetHistory: [], curSetReceipts: [], curSetBacklog: [],
+  pendingPromoChoice: null,
+  reflectOverrideActive: false
+};
+
+function initTabs(container) {
+  container.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      container.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const target = btn.getAttribute("data-tab");
+      container.querySelectorAll(".tabpanel").forEach(p => {
+        p.classList.toggle("active", p.getAttribute("data-tabpanel") === target);
+      });
+    });
+  });
+}
+
+function fallbackCopy(text, cb) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (cb) cb();
+  } catch (e) { /* clipboard unavailable in this browser; user can select-and-copy manually */ }
+}
+function copyPrompt(text, copiedElId) {
+  const showCopied = () => {
+    const el = document.getElementById(copiedElId);
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(showCopied).catch(() => fallbackCopy(text, showCopied));
+  } else {
+    fallbackCopy(text, showCopied);
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if (typeof window.scrollTo === "function") { try { window.scrollTo(0, 0); } catch (e) {} }
+}
+function lastDigitOf(str) {
+  const digits = (str.match(/\d/g) || []);
+  if (digits.length === 0) return 0;
+  return parseInt(digits[digits.length - 1], 10);
+}
+function money(n) { return "₹" + Math.round(n).toLocaleString("en-IN"); }
+
+function renderStudentBar() {
+  document.getElementById("studentbar").classList.add("show");
+  document.getElementById("sb-name").textContent = S.name || "—";
+  document.getElementById("sb-roll").textContent = S.roll || "—";
+  document.getElementById("sb-role").textContent = S.role || "—";
+  const setNum = S.sets.length + 1;
+  const roundNum = S.engine ? Math.min(S.engine.round + 1, ROUNDS_PER_SET) : 0;
+  document.getElementById("sb-setround").textContent = S.engine
+    ? ("Round Set " + setNum + " · Round " + roundNum + " of " + ROUNDS_PER_SET)
+    : ("Round Set " + Math.max(setNum, 1));
+  const cum = S.engine && S.engine.costHistory[S.roleIdx].length
+    ? S.engine.costHistory[S.roleIdx][S.engine.costHistory[S.roleIdx].length - 1].cumTotal
+    : 0;
+  document.getElementById("sb-cost").textContent = money(cum);
+}
+
+/* ---- Setup ---- */
+document.getElementById("btn-start").addEventListener("click", () => {
+  const name = document.getElementById("in-name").value.trim();
+  const roll = document.getElementById("in-roll").value.trim();
+  if (!name || !roll) { alert("Please enter both your name and roll number."); return; }
+  S.name = name; S.roll = roll;
+  const ld = lastDigitOf(roll);
+  S.roleIdx = ld % 4;
+  S.role = TIERS[S.roleIdx];
+  document.getElementById("role-name").textContent = S.role;
+  document.getElementById("role-desc").textContent = ROLE_DESC[S.role];
+  renderStudentBar();
+  saveLocal();
+  showScreen("screen-role");
+});
+
+document.getElementById("btn-begin-set1").addEventListener("click", () => {
+  startSet({ ...BASELINE_CFG }, "Round Set 1");
+});
+
+/* ---- Optional non-graded walkthrough: static tour of the play screen, nothing simulated or saved ---- */
+document.getElementById("btn-watch-demo").addEventListener("click", () => {
+  showScreen("screen-demo");
+});
+document.getElementById("btn-demo-back").addEventListener("click", () => {
+  showScreen("screen-role");
+});
+
+/* ---- Play loop ---- */
+function startSet(cfg, label) {
+  S.engine = new BullwhipEngine(cfg, S.roleIdx);
+  S.setLabel = label;
+  S.curSetHistory = [];
+  S.curSetReceipts = [];
+  S.curSetBacklog = [];
+  S.curSetPromoEvents = [];
+  document.getElementById("set-label").textContent = label;
+  document.getElementById("leadtime-badge").textContent = "Lead time: " + cfg.leadTime + " round" + (cfg.leadTime === 1 ? "" : "s");
+  const notes = causeNotesFor(cfg);
+  document.getElementById("cause-notes").innerHTML = notes.length
+    ? notes.map(n => "<div class='causebox'>" + n + "</div>").join("")
+    : "";
+  document.getElementById("cost-rate-box").innerHTML =
+    "<div class='costratecell'><div class='lbl'>Holding cost</div><div class='val'>₹" + HOLDING_RATE.toFixed(2) + " / unit / round</div></div>" +
+    "<div class='costratecell'><div class='lbl'>Backlog cost</div><div class='val'>₹" + BACKLOG_RATE.toFixed(2) + " / unit / round</div></div>" +
+    "<div class='costratecell'><div class='lbl'>Procurement cost</div><div class='val'>₹" + PROCUREMENT_RATE.toFixed(2) + " / unit ordered</div></div>" +
+    (S.roleIdx === 0 ? "<div class='costratecell'><div class='lbl'>Selling price</div><div class='val'>₹" + REGULAR_PRICE.toFixed(2) + " / unit (regular)</div></div>" : "");
+  showScreen("screen-play");
+  playNextRound();
+}
+
+let chartPosition = null, chartPipeline = null;
+// Persistent, always-visible running list of past promotions -- separate from the one-time feedback-box
+// note, so a promotion that happened a few rounds ago (and was easy to miss in the moment) stays visible
+// for the rest of the set. Non-Retailer players only get the generic fact that a promotion ran, not the
+// Retailer's discount tier or revenue outcome -- same information boundary as the live note. Called both
+// right after a round is submitted (so it updates immediately) and whenever the next round renders.
+function renderPromoHistoryTable() {
+  const el = document.getElementById("promo-history-table");
+  if (!el) return;
+  const promoHistRows = (S.curSetPromoEvents || []).map(p => {
+    if (S.roleIdx === 0) {
+      const verdict = p.revenueDelta >= 0 ? "net gain" : "net loss";
+      return "<tr><td>Round " + (p.round + 1) + "</td><td>" + p.label + ", " + (p.success ? "succeeded" : "did not pay off") + " (" + verdict + " " + money(Math.abs(p.revenueDelta)) + ")</td></tr>";
+    }
+    return "<tr><td>Round " + (p.round + 1) + "</td><td>A promotion ran -- may be affecting order volumes upstream.</td></tr>";
+  }).join("");
+  el.innerHTML = "<tr><th>Round</th><th>What happened</th></tr>" +
+    (promoHistRows || "<tr><td colspan='2'>No promotions yet.</td></tr>");
+}
+
+function playNextRound() {
+  if (S.engine.isDone(ROUNDS_PER_SET)) { finishSet(); return; }
+  if (S.pendingPromoChoice) {
+    S.engine.queuePromotion(S.pendingPromoChoice);
+    S.pendingPromoChoice = null;
+  }
+  const info = S.engine.beginRound();
+  renderRoundUI(info);
+}
+
+function renderRoundUI(info) {
+  const pct = Math.round((info.round / ROUNDS_PER_SET) * 100);
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("round-title").textContent = "Round " + (info.round + 1) + " of " + ROUNDS_PER_SET;
+  renderStudentBar();
+
+  S.curSetReceipts[info.round] = info.receivedThisRound;
+  S.curSetBacklog[info.round] = info.backlog;
+
+  // Shortfall banner: only shown when this round's receipt was actually short of what was owed --
+  // explains WHY, in plain language, rather than leaving the player to wonder if it's a bug.
+  const banner = document.getElementById("shortfall-banner");
+  const shortBy = Math.round(((info.owedThisRound || 0) - info.receivedThisRound) * 100) / 100;
+  if (info.shortfallReason && shortBy > 0) {
+    const reasonText = info.shortfallReason === "factory_cap"
+      ? "the Factory hit its production cap of " + FACTORY_CAP + " units this round and could not produce any more"
+      : "your upstream tier was out of stock and could only cover part of your order";
+    banner.style.display = "block";
+    banner.innerHTML = "<span class='headline'>Your upstream tier could only ship part of what you're owed</span>" +
+      "You were owed <strong>" + info.owedThisRound + " units</strong> this round but received only <strong>" + info.receivedThisRound + "</strong> (" + shortBy + " short). " +
+      "Reason: " + reasonText + ". The remaining " + shortBy + " units are now backlogged upstream and should arrive once they catch up.";
+  } else {
+    banner.style.display = "none";
+    banner.innerHTML = "";
+  }
+
+  const rows = [];
+  rows.push(["Order lead time", info.leadTime + " round" + (info.leadTime === 1 ? "" : "s"), null]);
+  if (S.role === "Retailer") {
+    rows.push(["Customer demand this round", info.incomingOrder, null]);
+  } else {
+    rows.push(["Order placed on you this round", info.incomingOrder, null]);
+    if (info.trueDemandVisible !== null) rows.push(["Shared demand data — true customer demand", info.trueDemandVisible, null]);
+  }
+  const receivedNote = "shipped to you " + info.leadTime + " round" + (info.leadTime === 1 ? "" : "s") + " ago" +
+    (info.shortfallReason && shortBy > 0 ? " — short by " + shortBy : "");
+  rows.push(["Received this round", info.receivedThisRound, receivedNote]);
+  rows.push(["Stock on hand", info.onHand, "after this round's receipt, before you ship out"]);
+  rows.push(["Your backlog", info.backlog, "owed to the tier below you, not yet shipped"]);
+  rows.push(["Stock in transit to you", info.pipelineQty, "already ordered, not yet arrived"]);
+  rows.push(["Inventory position", info.position, "= stock on hand + stock in transit − your backlog"]);
+  document.getElementById("info-table").innerHTML = rows.map(r =>
+    "<tr><td class='k'>" + r[0] + (r[2] ? "<span class='formula-note'>" + r[2] + "</span>" : "") + "</td><td class='v'>" + r[1] + "</td></tr>"
+  ).join("");
+
+  const visiblePipeline = info.pipelineDetail.filter(p => p.qty > 0);
+  const pdRows = visiblePipeline.length
+    ? visiblePipeline.map(p => "<tr><td>In " + p.inRounds + " round" + (p.inRounds === 1 ? "" : "s") + "</td><td>" + p.qty + " units</td></tr>").join("")
+    : "<tr><td colspan='2'>Nothing currently in transit to you.</td></tr>";
+  document.getElementById("pipeline-table").innerHTML = "<tr><th>Arrival timing</th><th>Quantity</th></tr>" + pdRows;
+
+  const receiptRows = S.curSetReceipts.map((qty, idx) => "<tr><td>Round " + (idx + 1) + "</td><td>" + qty + " units received</td></tr>").join("");
+  document.getElementById("receipts-table").innerHTML = "<tr><th>Round</th><th>Received</th></tr>" +
+    (receiptRows || "<tr><td colspan='2'>No receipts yet.</td></tr>");
+
+  const backlogRows = S.curSetBacklog.map((qty, idx) => "<tr><td>Round " + (idx + 1) + "</td><td>" + qty + " units backlogged</td></tr>").join("");
+  document.getElementById("backlog-history-table").innerHTML = "<tr><th>Round</th><th>Backlog</th></tr>" +
+    (backlogRows || "<tr><td colspan='2'>No backlog yet.</td></tr>");
+
+  renderPromoHistoryTable();
+
+  document.getElementById("order-hint").textContent = info.moqHint
+    ? ("Note: whatever you enter will be rounded UP to the nearest multiple of " + info.moqHint + " (minimum order quantity in effect through round " + MOQ_ROUNDS_LIMIT + ").")
+    : "";
+
+  renderPromoBlock(info);
+
+  const ctxPipe = document.getElementById("chart-pipeline").getContext("2d");
+  if (chartPipeline) chartPipeline.destroy();
+  const pipeLabels = visiblePipeline.map(p => "In " + p.inRounds + " rd" + (p.inRounds === 1 ? "" : "s"));
+  const pipeData = visiblePipeline.map(p => p.qty);
+  chartPipeline = new Chart(ctxPipe, {
+    type: "bar",
+    data: { labels: pipeLabels.length ? pipeLabels : ["No shipments in transit"], datasets: [{ label: "Units arriving", data: pipeData.length ? pipeData : [0], backgroundColor: "#2f5aa8" }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  const ctxPos = document.getElementById("chart-position").getContext("2d");
+  if (chartPosition) chartPosition.destroy();
+  const hist = S.curSetHistory;
+  const posLabels = hist.map((_, i) => "R" + (i + 1)).concat(["R" + (info.round + 1) + " (now)"]);
+  chartPosition = new Chart(ctxPos, {
+    type: "line",
+    data: {
+      labels: posLabels,
+      datasets: [
+        { label: "On hand", data: hist.map(h => h.onHand).concat([info.onHand]), borderColor: "#1e824c", tension: 0.15, pointRadius: 2 },
+        { label: "Backlog", data: hist.map(h => h.backlog).concat([info.backlog]), borderColor: "#c0392b", tension: 0.15, pointRadius: 2 },
+        { label: "Position", data: hist.map(h => h.position).concat([info.position]), borderColor: "#2f5aa8", borderDash: [4, 3], tension: 0.15, pointRadius: 2 }
+      ]
+    },
+    options: { responsive: true, scales: { y: { title: { display: true, text: "Units" } } } }
+  });
+
+  document.getElementById("order-input").value = "";
+  document.getElementById("order-input").disabled = false;
+  document.getElementById("btn-submit-order").disabled = false;
+  document.getElementById("btn-submit-order").style.display = "inline-block";
+  document.getElementById("btn-next-round").style.display = "none";
+  document.getElementById("feedback-box").classList.remove("show");
+}
+
+document.getElementById("btn-submit-order").addEventListener("click", () => {
+  const val = document.getElementById("order-input").value;
+  if (val === "" || isNaN(val) || Number(val) < 0) { alert("Enter a non-negative number (0 is allowed)."); return; }
+  const result = S.engine.submitRound(Number(val));
+  S.curSetHistory[result.round] = { onHand: result.humanOnHandAfter, backlog: result.humanBacklogAfter, position: result.humanPositionAfter };
+  if (result.promoInfo) {
+    S.curSetPromoEvents.push({
+      round: result.round, label: result.promoInfo.label, success: result.promoInfo.success,
+      revenueDelta: Math.round(result.promoInfo.revenueDelta * 100) / 100
+    });
+    renderPromoHistoryTable();
+  }
+  document.getElementById("order-input").disabled = true;
+  document.getElementById("btn-submit-order").style.display = "none";
+  document.getElementById("btn-next-round").style.display = "inline-block";
+  renderStudentBar();
+  const fb = document.getElementById("feedback-box");
+  fb.classList.add("show");
+  let moqNote = result.moqAdjusted ? ("<p class='muted' style='margin:6px 0 0;'>Your order was rounded up to <strong>" + result.moqRoundedTo + "</strong> units to satisfy the minimum order quantity.</p>") : "";
+  let revenueNote = "";
+  if (S.roleIdx === 0) {
+    revenueNote = "<div class='costcell'><div class='lbl'>Revenue this round</div><div class='val'>" + money(result.humanRevenue) + "</div></div>";
+    if (result.promoInfo) {
+      const p = result.promoInfo;
+      revenueNote += ""; // promo result itself is shown in the promo result box, not repeated here
+    }
+  }
+  // Non-Retailer players don't see the Retailer's own promo-verdict box, but they do get a plain
+  // heads-up that a promotion happened this round -- enough to notice something unusual is going on
+  // without being told it's THE cause of any pattern they're seeing (that's still theirs to diagnose).
+  let promoNote = "";
+  if (result.promoInfo && S.roleIdx !== 0) {
+    const delayApplies = S.roleIdx >= 2 && S.engine.cfg.pricing !== "edlp" && S.engine.cfg.promoInfoDelay > 0;
+    promoNote = "<p class='muted' style='margin:6px 0 0;'><strong>Note:</strong> the Retailer ran a promotion this round" +
+      (delayApplies
+        ? " -- because that information reaches you with a delay, you may not see its effect on your own orders for a few rounds yet."
+        : " -- this may be affecting order volumes upstream.") +
+      "</p>";
+  }
+  fb.innerHTML = "You ordered <strong>" + result.placedOrders[S.roleIdx] + "</strong> units in round " + (result.round + 1) + "." + moqNote + promoNote +
+    "<div class='costbox'>" +
+    revenueNote +
+    "<div class='costcell'><div class='lbl'>Holding cost</div><div class='val'>" + money(result.humanCost.holding) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Backlog cost</div><div class='val'>" + money(result.humanCost.backlog) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Procurement cost</div><div class='val'>" + money(result.humanCost.procurement) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>This round total cost</div><div class='val'>" + money(result.humanCost.total) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Cumulative cost</div><div class='val'>" + money(result.humanCost.cumTotal) + "</div></div>" +
+    "</div>";
+  saveLocal();
+});
+document.getElementById("btn-next-round").addEventListener("click", () => {
+  playNextRound();
+});
+
+/* ---- Retailer promotion decision block (shown alongside the round, applies to the round just played
+   next time -- i.e. the Retailer chooses BEFORE seeing next round's numbers, since queuePromotion()
+   must run before the engine's beginRound() for the round it affects).
+   NOTE: the choice made here is read by playNextRound() the ONE time the student clicks "Next Round" --
+   nothing else must ever null out S.pendingPromoChoice in between, or the choice is silently lost. */
+function renderPromoBlock(info) {
+  const block = document.getElementById("promo-block");
+  if (S.roleIdx !== 0) { block.style.display = "none"; return; }
+
+  let resultHtml = "";
+  if (info.promoInfo) {
+    const p = info.promoInfo;
+    const cls = p.success ? "success" : "fail";
+    const verdictWord = p.success ? "PROMOTION PAID OFF" : "PROMOTION DID NOT PAY OFF";
+    const verdict = p.revenueDelta >= 0 ? "net gain" : "net loss";
+    resultHtml = "<div class='promoresultbox " + cls + "'><span class='verdict'>" + verdictWord + " -- " + p.label + "</span>" +
+      "Demand this round was <strong>" + p.demand + " units</strong> (baseline would have been " + p.baselineDemand + ") at a promo price of ₹" + p.price.toFixed(2) + "/unit. " +
+      "Revenue this round: " + money(p.revenueWithPromo) + " vs. an estimated " + money(p.revenueWithoutPromo) + " without the promo -- a <strong>" + verdict + " of " + money(Math.abs(p.revenueDelta)) + "</strong>.</div>";
+  }
+
+  if (!info.canOfferPromo) {
+    block.style.display = resultHtml ? "block" : "none";
+    block.innerHTML = resultHtml;
+    return;
+  }
+  block.style.display = "block";
+
+  // Market intelligence memo: stated industry odds + this player's own actual track record so far this set.
+  const log = (S.engine && S.engine.promoOutcomeLog) || [];
+  const memoRows = Object.keys(PROMO_TIERS).map(key => {
+    const t = PROMO_TIERS[key];
+    const priorUses = log.filter(e => e.tierKey === key);
+    const successes = priorUses.filter(e => e.success).length;
+    const trackText = priorUses.length
+      ? successes + " of " + priorUses.length + " succeeded so far"
+      : "not yet used this set";
+    return "<div class='memo-tier-row'><span class='tname'>" + t.label + "</span>" +
+      "<span class='modds'>Industry-reported success rate: ~" + Math.round(t.successProb * 100) + "%</span>" +
+      "<span class='mtrack'>Your track record: " + trackText + "</span></div>";
+  }).join("");
+  const memoHtml = "<div class='memobox'>" +
+    "<div class='memohead'><div class='subj'>MEMO -- Market Intelligence</div>" +
+    "<div class='meta'>To: Retailer &nbsp;|&nbsp; Re: Promotion odds ahead of next round's decision</div></div>" +
+    "<p class='muted' style='margin:0 0 6px;'>Our research team's latest read on each promotion tier, plus your own results so far this round set:</p>" +
+    memoRows +
+    "</div>";
+
+  const opts = Object.keys(PROMO_TIERS).map(key => {
+    const t = PROMO_TIERS[key];
+    const checkedAttr = S.pendingPromoChoice === key ? " checked" : "";
+    return "<div class='promo-option" + (S.pendingPromoChoice === key ? " selected" : "") + "' data-key='" + key + "'>" +
+      "<label><input type='radio' name='promo-choice' value='" + key + "'" + checkedAttr + "> " + t.label + "</label>" +
+      "<p>" + t.reportText + "</p></div>";
+  }).join("");
+  block.innerHTML = resultHtml + memoHtml +
+    "<div class='promocard'><h4>Offer a promotion next round? (" + info.promosRemaining + " use" + (info.promosRemaining === 1 ? "" : "s") + " remaining)</h4>" +
+    "<p class='muted'>As the Retailer, you may offer a limited-time discount to boost sales, up to " + PROMO_MAX_USES + " times total this round set. Pick a tier below to run it next round -- click your selected tier again to change your mind, or simply leave all unselected to skip a promotion next round (no separate action needed).</p>" +
+    opts +
+    "</div>";
+  block.querySelectorAll("input[name=promo-choice]").forEach(el => {
+    // Capture whether this radio was already the selected one BEFORE the click resolves --
+    // native radio-click behaviour always forces checked=true, so we detect "clicking the same
+    // option again" here rather than in click/change (where the state has already changed).
+    el.addEventListener("mousedown", (e) => {
+      e.target.dataset.wasSelected = (S.pendingPromoChoice === e.target.value) ? "true" : "false";
+    });
+    el.addEventListener("change", (e) => {
+      if (e.target.dataset.wasSelected === "true") {
+        // Clicking the already-selected tier again deselects it (skip the promotion).
+        e.target.checked = false;
+        S.pendingPromoChoice = null;
+      } else {
+        S.pendingPromoChoice = e.target.value;
+      }
+      block.querySelectorAll(".promo-option").forEach(card => {
+        card.classList.toggle("selected", card.getAttribute("data-key") === S.pendingPromoChoice);
+      });
+    });
+  });
+}
+
+/* ---- Finish set / lock screen ---- */
+function finishSet() {
+  const cfg = S.engine.cfg;
+  const orders = TIERS.map((_, i) => S.engine.history[i].slice());
+  const demand = S.engine.demandHistory.slice();
+  const costHist = S.engine.costHistory[S.roleIdx].slice();
+  const systemCostTotal = S.engine.costHistory.reduce((sum, tierCosts) => sum + (tierCosts.length ? tierCosts[tierCosts.length - 1].cumTotal : 0), 0);
+  const moqHistory = TIERS.map((_, i) => S.engine.moqHistory[i].slice());
+  const setRecord = {
+    label: S.setLabel, cfg, orders, demand, costHist,
+    amplitude: TIERS.map((_, i) => amplitude(orders[i])),
+    ratio: TIERS.map((_, i) => bullwhipRatio(orders[i], demand)),
+    yourFinalCost: costHist.length ? costHist[costHist.length - 1].cumTotal : 0,
+    systemCostTotal,
+    promoEvents: (S.curSetPromoEvents || []).slice(),
+    moqHistory
+  };
+  S.sets.push(setRecord);
+  saveLocal();
+  showScreen("screen-lock1");
+}
+
+document.getElementById("btn-lock1-submit").addEventListener("click", () => {
+  const val = document.getElementById("lock1-password").value;
+  if (val === PASSWORD_RESULTS) {
+    document.getElementById("lock1-err").classList.remove("show");
+    document.getElementById("lock1-password").value = "";
+    renderSetResults(S.sets[0]);
+  } else {
+    document.getElementById("lock1-err").classList.add("show");
+  }
+});
+
+/* ---- Full chain history tabs (order/MOQ/promo history for every tier, not just the human's own) ----
+   Reused on both the mid-set results screen (single round set) and the final screen (both round sets
+   combined, one tab group per tier, showing all sets played so far side by side). */
+function renderChainHistoryTabs(recs, tabbarId, panelsId) {
+  const tabbar = document.getElementById(tabbarId);
+  const panels = document.getElementById(panelsId);
+  if (!tabbar || !panels) return;
+  const uid = tabbarId; // used to namespace data-tab values so multiple tab groups on one page don't collide
+  tabbar.innerHTML = TIERS.map((t, i) =>
+    "<button type='button' class='tab-btn" + (i === 0 ? " active" : "") + "' data-tab='" + uid + "-tier" + i + "'>" + t + (i === S.roleIdx ? " (you)" : "") + "</button>"
+  ).join("");
+  panels.innerHTML = TIERS.map((t, i) => {
+    const setsHtml = recs.map(rec => {
+      const orders = rec.orders[i];
+      const moqHist = (rec.moqHistory && rec.moqHistory[i]) || [];
+      const rows = orders.map((qty, r) => {
+        const moqFired = !!moqHist[r];
+        return "<tr><td>Round " + (r + 1) + "</td><td>" + qty + "</td><td>" + (moqFired ? "MOQ rounded up" : "") + "</td></tr>";
+      }).join("");
+      let promoHtml = "";
+      if (i === 0 && rec.promoEvents && rec.promoEvents.length) {
+        promoHtml = "<p class='muted' style='margin-top:8px;'><strong>Promotions run:</strong> " +
+          rec.promoEvents.map(p => "round " + (p.round + 1) + " (" + p.label + ", " + (p.revenueDelta >= 0 ? "net gain " : "net loss ") + money(Math.abs(p.revenueDelta)) + ")").join("; ") + "</p>";
+      } else if (i === 0) {
+        promoHtml = "<p class='muted' style='margin-top:8px;'>No promotions run this round set.</p>";
+      }
+      return "<div style='margin-bottom:16px;'><h5 style='margin-bottom:6px;'>" + rec.label + "</h5>" +
+        "<table class='metrictable'><tr><th>Round</th><th>Order placed</th><th>MOQ</th></tr>" + rows + "</table>" +
+        promoHtml + "</div>";
+    }).join("");
+    return "<div class='tabpanel" + (i === 0 ? " active" : "") + "' data-tabpanel='" + uid + "-tier" + i + "'>" + setsHtml + "</div>";
+  }).join("");
+  initTabs(tabbar.closest(".tabwrap"));
+}
+
+/* ---- Results rendering ---- */
+let chartSet = null, chartCost = null;
+function renderSetResults(rec, isFirstSet) {
+  document.getElementById("results-title").textContent = rec.label + " — results";
+
+  document.getElementById("results-costbox").innerHTML =
+    "<div class='costcell'><div class='lbl'>Your total cost</div><div class='val'>" + money(rec.yourFinalCost) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Whole-chain total cost</div><div class='val'>" + money(rec.systemCostTotal) + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Your order amplitude</div><div class='val'>" + rec.amplitude[S.roleIdx] + "</div></div>" +
+    "<div class='costcell'><div class='lbl'>Your bullwhip ratio</div><div class='val'>" + (rec.ratio[S.roleIdx] === null ? "—" : rec.ratio[S.roleIdx]) + "</div></div>";
+  const ratioVal = rec.ratio[S.roleIdx];
+  document.getElementById("bullwhip-ratio-explain").innerHTML =
+    "<strong>How the bullwhip ratio is calculated:</strong> it's the variance of YOUR orders divided by the variance of the true customer demand over the same rounds -- Var(your orders) &divide; Var(true demand)." +
+    (ratioVal === null ? " (Demand had zero variance this round set, so the ratio is undefined.)" :
+      " Your ratio of " + ratioVal + " means your orders swung " + (ratioVal > 1 ? (Math.round(ratioVal * 10) / 10) + "x MORE than real demand did" : "about as much as, or less than, real demand did") +
+      " -- a ratio above 1 is the signature of the bullwhip effect: you (or the automated policy) amplified a smaller real change into a bigger swing in orders.");
+
+  const ctx = document.getElementById("chart-set").getContext("2d");
+  if (chartSet) chartSet.destroy();
+  const labels = rec.demand.map((_, i) => "R" + (i + 1));
+  const colors = ["#2f5aa8", "#1e824c", "#c0392b", "#8e44ad"];
+  const datasets = TIERS.map((t, i) => ({
+    label: t + " orders" + (i === S.roleIdx ? " (you)" : ""),
+    data: rec.orders[i], borderColor: colors[i], backgroundColor: colors[i],
+    borderWidth: i === S.roleIdx ? 3 : 2, tension: 0.15, pointRadius: 2
+  }));
+  datasets.push({ label: "True customer demand", data: rec.demand, borderColor: "#000", borderDash: [4, 3], borderWidth: 1.5, pointRadius: 0, tension: 0.1 });
+  chartSet = new Chart(ctx, { type: "line", data: { labels, datasets }, options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: "Units ordered" } } } } });
+
+  const ctxCost = document.getElementById("chart-cost").getContext("2d");
+  if (chartCost) chartCost.destroy();
+  chartCost = new Chart(ctxCost, {
+    type: "line",
+    data: { labels, datasets: [{ label: "Your cumulative cost (₹)", data: rec.costHist.map(c => c.cumTotal), borderColor: "#c9972f", backgroundColor: "#c9972f", tension: 0.15, pointRadius: 2 }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  document.getElementById("metrics-table").innerHTML =
+    "<tr><th>Tier</th>" + TIERS.map(t => "<th>" + t + "</th>").join("") + "</tr>" +
+    "<tr><td>Order amplitude (max − min)</td>" + rec.amplitude.map(a => "<td>" + a + "</td>").join("") + "</tr>" +
+    "<tr><td>Bullwhip ratio (Var orders ÷ Var demand)</td>" + rec.ratio.map(r => "<td>" + (r === null ? "—" : r) + "</td>").join("") + "</tr>";
+
+  renderChainHistoryTabs([rec], "chainhist-tabbar", "chainhist-panels");
+
+  showScreen("screen-results");
+}
+
+document.getElementById("btn-download-set1").addEventListener("click", () => {
+  saveLocal();
+  downloadReport("Bullwhip_Report_RoundSet1_" + S.roll.replace(/\s+/g, "") + ".txt");
+});
+document.getElementById("btn-download-set1-pdf").addEventListener("click", () => {
+  saveLocal();
+  downloadReportPDF("Bullwhip_Report_RoundSet1_" + S.roll.replace(/\s+/g, "") + ".pdf");
+});
+
+/* ---- Manual reflection screen (before any AI tool is used) ---- */
+document.getElementById("btn-goto-reflect").addEventListener("click", () => {
+  document.getElementById("ta-reflect-role").value = S.reflectionRole || "";
+  document.getElementById("ta-reflect-actions").value = S.reflectionActions || "";
+  document.getElementById("ta-reflect-observe").value = S.reflectionObserve || "";
+  showScreen("screen-reflect");
+});
+function captureReflectionFields() {
+  S.reflectionRole = document.getElementById("ta-reflect-role").value;
+  S.reflectionActions = document.getElementById("ta-reflect-actions").value;
+  S.reflectionObserve = document.getElementById("ta-reflect-observe").value;
+}
+document.getElementById("btn-reflect-continue").addEventListener("click", () => {
+  captureReflectionFields();
+  saveLocal();
+  if (S.reflectOverrideActive) {
+    S.reflectOverrideActive = false;
+    document.getElementById("reflect-override-banner").style.display = "none";
+    document.getElementById("prompt-notebooklm").textContent = notebookLMPromptText();
+    document.getElementById("ta-notebooklm-output").value = S.notebookLMOutput || "";
+    document.getElementById("ta-notebooklm-compare").value = S.notebookLMCompare || "";
+    showScreen("screen-notebooklm");
+  } else {
+    showScreen("screen-lock2");
+  }
+});
+
+/* ---- Lock screen 2: gates the NotebookLM stage ---- */
+document.getElementById("btn-lock2-submit").addEventListener("click", () => {
+  const val = document.getElementById("lock2-password").value;
+  if (val === PASSWORD_NOTEBOOKLM) {
+    document.getElementById("lock2-err").classList.remove("show");
+    document.getElementById("lock2-password").value = "";
+    document.getElementById("prompt-notebooklm").textContent = notebookLMPromptText();
+    document.getElementById("ta-notebooklm-output").value = S.notebookLMOutput || "";
+    document.getElementById("ta-notebooklm-compare").value = S.notebookLMCompare || "";
+    showScreen("screen-notebooklm");
+  } else {
+    document.getElementById("lock2-err").classList.add("show");
+  }
+});
+document.getElementById("btn-copy-notebooklm").addEventListener("click", () => copyPrompt(notebookLMPromptText(), "copied-notebooklm"));
+
+function captureNotebookLMFields() {
+  S.notebookLMOutput = document.getElementById("ta-notebooklm-output").value;
+  S.notebookLMCompare = document.getElementById("ta-notebooklm-compare").value;
+}
+document.getElementById("btn-download-notebooklm-report").addEventListener("click", () => {
+  captureNotebookLMFields();
+  saveLocal();
+  downloadReport("Bullwhip_Diagnosis_Report_" + S.roll.replace(/\s+/g, "") + ".txt");
+});
+document.getElementById("btn-download-notebooklm-report-pdf").addEventListener("click", () => {
+  captureNotebookLMFields();
+  saveLocal();
+  downloadReportPDF("Bullwhip_Diagnosis_Report_" + S.roll.replace(/\s+/g, "") + ".pdf");
+});
+
+/* ---- Instructor override: send a student back to fill in a skipped reflection ----
+   Reuses PASSWORD_RESULTS -- this is the same instructor password already used to unlock
+   results, not a new one to distribute. Not real security, same as the other lock screens. */
+document.getElementById("btn-override-toggle").addEventListener("click", () => {
+  const box = document.getElementById("override-box");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+});
+document.getElementById("btn-override-submit").addEventListener("click", () => {
+  const val = document.getElementById("override-password").value;
+  if (val === PASSWORD_RESULTS) {
+    captureNotebookLMFields();
+    saveLocal();
+    document.getElementById("override-err").classList.remove("show");
+    document.getElementById("override-password").value = "";
+    document.getElementById("override-box").style.display = "none";
+    S.reflectOverrideActive = true;
+    document.getElementById("ta-reflect-role").value = S.reflectionRole || "";
+    document.getElementById("ta-reflect-actions").value = S.reflectionActions || "";
+    document.getElementById("ta-reflect-observe").value = S.reflectionObserve || "";
+    document.getElementById("reflect-override-banner").style.display = "block";
+    showScreen("screen-reflect");
+  } else {
+    document.getElementById("override-err").classList.add("show");
+  }
+});
+
+function buildReportLines() {
+  const lines = [];
+  lines.push("BULLWHIP EFFECT SIMULATOR — STUDENT REPORT");
+  lines.push("Great Lakes Institute of Management, Chennai — Supply Chain Management");
+  lines.push("Instructors: Prof. Sandeep Srivathsan & Prof. Pranesh Saisridhar");
+  lines.push("Name: " + S.name);
+  lines.push("Roll number: " + S.roll);
+  lines.push("Assigned role: " + S.role);
+  lines.push("Generated: " + new Date().toLocaleString());
+  lines.push("");
+  const rec = S.sets[0];
+  if (rec) {
+    lines.push("---- " + rec.label + " ----");
+    lines.push("Lead time (order to receipt): " + rec.cfg.leadTime + " round(s).");
+    causeNotesFor(rec.cfg).forEach(n => lines.push(n.replace(/<\/?strong>/g, "")));
+    lines.push("");
+    lines.push("True customer demand, round by round: " + rec.demand.join(", "));
+    TIERS.forEach((t, i) => {
+      lines.push(t + " — order placed each round: " + rec.orders[i].join(", "));
+      lines.push("  Order variability (amplitude): " + rec.amplitude[i] + (rec.ratio[i] === null ? "" : "; bullwhip ratio vs. true demand: " + rec.ratio[i]));
+      if (rec.moqHistory && rec.moqHistory[i]) {
+        const moqRounds = rec.moqHistory[i].map((fired, idx) => fired ? (idx + 1) : null).filter(x => x !== null);
+        if (moqRounds.length) lines.push("  Minimum-order-quantity rounding applied in rounds: " + moqRounds.join(", "));
+      }
+    });
+    lines.push("Your holding cost per round: " + rec.costHist.map(c => c.holding).join(", "));
+    lines.push("Your backlog cost per round: " + rec.costHist.map(c => c.backlog).join(", "));
+    lines.push("Your procurement cost per round: " + rec.costHist.map(c => c.procurement !== undefined ? c.procurement : 0).join(", "));
+    lines.push("Your cumulative cost per round: " + rec.costHist.map(c => c.cumTotal).join(", "));
+    lines.push("Your total cost: " + money(rec.yourFinalCost) + "   Whole-chain total cost: " + money(rec.systemCostTotal));
+    if (rec.promoEvents && rec.promoEvents.length) {
+      lines.push("Promotions run (Retailer only): " + rec.promoEvents.map(p => "round " + (p.round + 1) + " (" + p.label + ", " + (p.revenueDelta >= 0 ? "net gain " : "net loss ") + money(Math.abs(p.revenueDelta)) + ")").join("; "));
+    }
+    lines.push("(Charts of your order pattern and cumulative cost are included in the PDF version of this report -- download that instead of the .txt if you want the visuals.)");
+    lines.push("");
+  }
+  lines.push("---- My reflection (written before any AI tool was used) ----");
+  lines.push("My role: " + (S.reflectionRole || "(not answered)"));
+  lines.push("What I did: " + (S.reflectionActions || "(not answered)"));
+  lines.push("What I observed and my own diagnosis: " + (S.reflectionObserve || "(not answered)"));
+  lines.push("");
+  lines.push("---- NotebookLM prompt used ----");
+  lines.push(notebookLMPromptText());
+  lines.push("");
+  lines.push("---- What NotebookLM said ----");
+  lines.push(S.notebookLMOutput || "(not answered)");
+  lines.push("");
+  lines.push("---- Comparison: my diagnosis vs. NotebookLM's ----");
+  lines.push(S.notebookLMCompare || "(not answered)");
+  return lines;
+}
+
+function downloadReport(filename) {
+  const lines = buildReportLines();
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* PDF export -- same content as the .txt report, paginated via jsPDF. Uses a monospace font and small
+   size so the per-round order/MOQ lines (which can be long) still fit without wrapping awkwardly. */
+function downloadReportPDF(filename) {
+  const lines = buildReportLines();
+  if (typeof window.jspdf === "undefined") {
+    alert("PDF library did not load (no internet connection?). Use the .txt download instead.");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const marginX = 40, marginTop = 50, lineHeight = 12, pageHeight = doc.internal.pageSize.getHeight();
+  let y = marginTop;
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8.5);
+  lines.forEach(line => {
+    // Wrap long lines to the page width instead of letting them run off the edge.
+    const wrapped = doc.splitTextToSize(line, 515);
+    wrapped.forEach(sub => {
+      if (y > pageHeight - 40) { doc.addPage(); y = marginTop; }
+      doc.text(sub, marginX, y);
+      y += lineHeight;
+    });
+  });
+  addChartToPDF(doc, "chart-set", "Orders placed by every tier vs. true demand");
+  addChartToPDF(doc, "chart-cost", "Your cumulative cost over time");
+  doc.save(filename);
+}
+
+/* Appends a full page with a snapshot of a Chart.js canvas, if that chart has actually been rendered
+   (it will have been, by the time a student reaches this download button, since screen-results is
+   always visited first). Fails silently if the canvas is missing or empty -- a chart-less report is
+   still a valid report, just without the visual. */
+function addChartToPDF(doc, canvasId, caption) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof canvas.toDataURL !== "function" || !canvas.width || !canvas.height) return;
+  let dataUrl;
+  try {
+    dataUrl = canvas.toDataURL("image/png");
+  } catch (e) { return; }
+  if (!dataUrl || dataUrl.indexOf("data:image") !== 0) return;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  doc.addPage();
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(caption, 40, 40);
+  const imgWidth = pageWidth - 80;
+  const imgHeight = Math.min(imgWidth * (canvas.height / canvas.width), pageHeight - 100);
+  doc.addImage(dataUrl, "PNG", 40, 55, imgWidth, imgHeight);
+}
+
+/* ================= PERSISTENCE ================= */
+function saveLocal() {
+  try {
+    localStorage.setItem("bullwhip_sim_state_v4", JSON.stringify({
+      name: S.name, roll: S.roll, roleIdx: S.roleIdx, role: S.role,
+      sets: S.sets,
+      reflectionRole: S.reflectionRole, reflectionActions: S.reflectionActions, reflectionObserve: S.reflectionObserve,
+      notebookLMOutput: S.notebookLMOutput, notebookLMCompare: S.notebookLMCompare
+    }));
+  } catch (e) {}
+}
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem("bullwhip_sim_state_v3");
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.name) {
+      document.getElementById("in-name").value = data.name;
+      document.getElementById("in-roll").value = data.roll;
+    }
+  } catch (e) {}
+}
+loadLocal();
+document.getElementById("rounds-per-set-note").textContent = ROUNDS_PER_SET;
+</script>
+</body>
+</html>
