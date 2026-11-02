@@ -233,7 +233,7 @@
       <p class="muted">Every round costs you money in two ways: <strong>holding cost</strong> on any stock sitting unused in your warehouse, and <strong>backlog cost</strong> on any order you couldn't fulfil on time (backlog cost is charged at twice the rate of holding cost, since a stockout is more costly than a bit of extra stock). Your goal is to place orders that keep your <strong>total cost as low as possible</strong> across all rounds — not simply to avoid ever running short, and not simply to hoard stock either. You are optimizing your own tier's cost, not the whole chain's — exactly like a real manager would.</p>
       <h3 style="margin-top:18px;">How this works</h3>
       <ul class="muted" style="padding-left:20px;">
-        <li>Every round, you will see the order placed on you by the tier below (or true customer demand, if you are the Retailer), your current stock on hand, any backlog, and stock already on the way to you — shown both as numbers and as charts.</li>
+        <li>Every round, you will see the order placed on you by the tier below, your current stock on hand, any backlog, and stock already on the way to you — shown both as numbers and as charts.</li>
         <li>You decide how much to order from the tier above you. There is no hidden "correct" answer — order what you think keeps cost lowest.</li>
         <li>Orders take time to arrive (the lead time) — just like a real supply chain.</li>
         <li>Some real-world complications may apply this round set — watch for notes about minimum order quantities or delayed promotion information as you play.</li>
@@ -842,7 +842,7 @@ function bullwhipRatio(orderSeries, demandSeries) {
 
 const ROLE_DESC = {
   Retailer: "You sell directly to the end customer. You see true customer demand every round and decide how much to order from the Wholesaler.",
-  Wholesaler: "You supply the Retailer. You only see the order the Retailer places on you (unless information sharing is switched on) and decide how much to order from the Distributor.",
+  Wholesaler: "You supply the Retailer. You only see the order the Retailer places on you and decide how much to order from the Distributor.",
   Distributor: "You supply the Wholesaler. You only see the order the Wholesaler places on you and decide how much to order from the Factory.",
   Factory: "You are the manufacturer. You only see the order the Distributor places on you and decide how much to produce/order for the next round."
 };
