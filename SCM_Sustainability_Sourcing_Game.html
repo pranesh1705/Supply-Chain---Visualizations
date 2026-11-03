@@ -69,6 +69,7 @@
 
 <!-- PAGE 1: SUPPLY CHAIN + STORY -->
 <div class="screen active" id="screen-setup">
+  <div class="banner" id="resume-box" style="display:none;"><b id="resume-text"></b><div style="margin-top:8px;"><button id="btn-resume">Resume where I left off</button> <button id="btn-fresh" class="secondary">Start fresh</button></div></div>
   <div class="card">
     <h2>Tarang Electronics: your supply chain</h2>
     <p><b>Tarang Electronics</b> is a Chennai TV brand that grew from a two-person showroom in T. Nagar into a name on retailers' shelves across South India. It owns no factories: its sets are designed in Chennai and built by four contract manufacturers (ODMs), three in East Asia and one near home. Every Diwali quarter, Tarang's retail partners place their biggest orders of the year, and this quarter <b>100,000 TVs</b> must reach the Chennai distribution centre (DC).</p>
@@ -170,7 +171,7 @@
     <button class="tabbtn active" data-tab="t-sum">Summary</button>
     <button class="tabbtn" data-tab="t-cmp">Decisions and costs</button>
     <button class="tabbtn" data-tab="t-sus">Sustainability metrics</button>
-    <button class="tabbtn" data-tab="t-ref">Reflect and submit</button>
+    <button class="tabbtn" data-tab="t-ref">Submit</button>
   </div>
   <div class="tabpane active" id="t-sum">
     <div class="card"><h2>Your two plans</h2><table id="tb-res"></table><p class="muted" id="res-note"></p></div>
@@ -182,16 +183,10 @@
   </div>
   <div class="tabpane" id="t-sus">
     <div class="card"><h2>Sustainability scorecard</h2>
-      <p class="muted small">Every metric below is computed from your submitted plans. The last column says what the metric tells you.</p>
+      <p class="muted small">The metrics below are the ones used in class, computed from your submitted plans.</p>
       <table id="tb-sus"></table></div>
   </div>
   <div class="tabpane" id="t-ref">
-    <div class="card">
-      <h3>Reflection</h3>
-      <label for="ta-1">1. What did you change between Round 1 and Round 2, and why?</label><textarea id="ta-1"></textarea>
-      <label for="ta-2" style="margin-top:10px;">2. Which of your changes cost profit, and which did not? Explain.</label><textarea id="ta-2"></textarea>
-      <label for="ta-3" style="margin-top:10px;">3. Name one risk in your Round 1 plan that the scoreboard did not show.</label><textarea id="ta-3"></textarea>
-    </div>
     <div class="card">
       <h3>Submit</h3>
       <p class="muted">Download your report, and paste the result code below into the form your instructor shares.</p>
@@ -336,7 +331,7 @@ function sliderMax(p,key){
 }
 function ctl(p,o,m){
   const k=o==="D"?"D":o+m; const u=unit(p,o,m);
-  return "<div class='ctl'><span><span class='tag t-"+m+"'>"+(o==="D"?"road":m)+"</span> <span class='chip'>Cost <b>₹"+fmtI(u.cost)+"</b>/TV</span> <span class='chip'>Carbon <b>"+u.em.toFixed(0)+" kg</b>/TV</span></span><input type='range' min='0' max='"+STEP+"' step='"+STEP+"' value='"+S.plan[p][k]+"' data-p='"+p+"' data-k='"+k+"' aria-label='"+PNAME[p]+" from ODM "+o+" by "+m+"'><span class='v' id='v-"+p+k+"'>0</span></div>";
+  return "<div class='ctl'><span><span class='tag t-"+m+"'>"+(o==="D"?"road":m)+"</span> <span class='chip'>Cost <b>₹"+fmtI(u.cost)+"</b>/TV</span> <span class='chip'>Carbon <b>"+u.em.toFixed(0)+" kg</b>/TV</span></span><input type='range' min='0' max='"+STEP+"' step='"+STEP+"' value='"+S.plan[p][k]+"' data-p='"+p+"' data-k='"+k+"' aria-label='"+PNAME[p]+" from ODM "+o+" by "+m+"'><span class='v' id='v-"+p+k+"'>0</span></div><div class='muted small lim' id='lim-"+p+k+"' style='margin:-2px 0 2px;'></div>";
 }
 function prodHTML(p){
   let h="<h3>"+PNAME[p]+" <span>"+fmtI(DEM[p])+" units to place</span></h3>";
@@ -369,6 +364,13 @@ function refresh(){
       const inp=document.querySelector("input[data-p='"+p+"'][data-k='"+k+"']"); if(!inp) return;
       const mx=sliderMax(p,k); inp.max=mx; inp.value=S.plan[p][k];
       document.getElementById("v-"+p+k).textContent=fmtI(S.plan[p][k]);
+      (function(){ const o=k[0]; let oth=0; Object.keys(S.plan[p]).forEach(kk=>{ if(kk!==k) oth+=S.plan[p][kk]; });
+        const mdem=DEM[p]-oth, mcap=CAP[o]-otherUse(p,k[0]==="D"?"D":o,k); const el=document.getElementById("lim-"+p+k); if(!el) return;
+        const free=Math.min(DEM[p],CAP[o]);
+        if(mx>=free){ el.textContent=""; }
+        else if(mdem<=mcap){ el.textContent="Can't go above "+fmtI(mx)+": only "+fmtI(Math.max(0,mdem))+" units of the "+PNAME[p]+" are still unplaced. Lower another source first to free units."; }
+        else { el.textContent="Can't go above "+fmtI(mx)+": ODM "+o+" capacity is "+fmtI(CAP[o])+" and "+fmtI(CAP[o]-mcap)+" units are already used by your other choices."; }
+      })();
     });
     IMP.forEach(o=>{
       const use=R.odm[o], f=use/CAP[o];
@@ -448,7 +450,6 @@ function showResults(){
   document.getElementById("res-note").textContent = (dE<0 ? ("Cost of cutting emissions in your plan: about ₹"+fmtI(-dP/(-dE))+" of profit per tonne of CO₂ avoided.") : "Your Round 2 plan did not reduce emissions relative to Round 1.")+" The lowest emissions any feasible plan can reach is about "+fmtI(MIN_EM_T)+" tonnes.";
   buildComparison(a,b); buildSus(a,b);
   document.getElementById("result-code").textContent=resultCode();
-  ["1","2","3"].forEach((k,i)=>{ document.getElementById("ta-"+k).value=S.ref[["a","b","c"][i]]||""; });
   showScreen("screen-results");
 }
 function buildComparison(a,b){
@@ -469,25 +470,18 @@ function buildSus(a,b){
   const C=[["Round 1",a],["Round 2",b]];
   const row=(l,f,why)=>"<tr><td>"+l+"</td>"+C.map(c=>"<td>"+f(c[1])+"</td>").join("")+"<td style='text-align:left;font-size:.8rem;color:#5a6472'>"+why+"</td></tr>";
   const pct=(x,y)=>y?(x/y*100).toFixed(1)+"%":"-";
+  const combos=x=>{ let n=0; PRODS.forEach(p=>{}); const seen={}; PRODS.forEach(p=>Object.keys(x.units[p]).forEach(k=>{ if((x.units[p][k]||0)>0) seen[k]=1; })); return Object.keys(seen).length; };
   let h="<tr><th>Metric</th><th>Round 1</th><th>Round 2</th><th>What it tells you</th></tr>";
-  h+=row("Total carbon footprint (t CO₂)",x=>fmtI(x.emT),"Absolute emissions of the festive-quarter stock. This is what a cap limits.");
-  h+=row("Emissions limit used",x=>pct(x.emT,EMISSIONS_CAP_T),"Share of the Round 2 board limit ("+fmtI(EMISSIONS_CAP_T)+" t) this plan would use.");
-  h+=row("Carbon per TV (kg CO₂)",x=>(x.emT*1000/TOT).toFixed(1),"Product carbon footprint, all 100,000 TVs averaged.");
-  h+=row("Carbon per 43-inch TV (kg CO₂)",x=>(prodEm(x,"43")/DEM["43"]).toFixed(1),"Larger sets weigh more and carry more factory carbon.");
-  h+=row("Carbon per 32-inch TV (kg CO₂)",x=>(prodEm(x,"32")/DEM["32"]).toFixed(1),"Compare with the 43-inch.");
-  h+=row("Carbon intensity of revenue (kg CO₂ per ₹ lakh)",x=>(x.emT*1000/(REVENUE/1e5)).toFixed(2),"Emissions per unit of sales, the usual intensity measure in sustainability reports.");
-  h+=row("Factory share of emissions (Scope 3, purchased goods)",x=>pct(x.emFac,x.emT*1000),"Carbon from making the TVs. Changes only by switching ODMs.");
-  h+=row("Transport share of emissions (Scope 3, logistics)",x=>pct(x.emTrans,x.emT*1000),"Carbon from moving the TVs. Changes by switching mode or lane.");
-  h+=row("Air freight share of emissions",x=>pct(x.emMode.air,x.emT*1000),"Air carries a small share of units but a large share of carbon.");
-  h+=row("Air share of units shipped",x=>pct(x.uMode.air,TOT),"Compare with the air share of emissions in the row above.");
-  h+=row("Sea share of units shipped",x=>pct(x.uMode.sea,TOT),"The low-carbon mode, but slow (24-28 days).");
-  h+=row("Road (ODM D) share of units",x=>pct(x.uMode.road,TOT),"Fast and local, but ODM D has the dirtiest factory.");
-  h+=row("Emissions by ODM (t): A / B / C / D",x=>IMP.concat(["D"]).map(o=>fmtI(x.emOdm[o]/1000)).join(" / "),"Which supplier your footprint sits with.");
-  h+=row("Delivered within 7 days",x=>(x.fast*100).toFixed(1)+"%","The service requirement that pushes against low carbon.");
-  h+=row("Profit per tonne of CO₂ (₹ lakh per t)",x=>(x.profit/x.emT/1e5).toFixed(2),"Eco-efficiency: how much profit each tonne of carbon buys.");
-  h+=row("Emissions above the lowest possible",x=>"+"+fmtI(x.emT-MIN_EM_T)+" t","Gap to the least-carbon plan any feasible sourcing could reach ("+fmtI(MIN_EM_T)+" t).");
-  h+="<tr><td>Abatement from Round 1 to Round 2 (t CO₂)</td><td colspan='2' style='text-align:center'>"+fmtI(a.emT-b.emT)+" t ("+pct(a.emT-b.emT,a.emT)+")</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>How much carbon the board's limit actually removed.</td></tr>";
-  h+="<tr><td>Cost of abatement (₹ per tonne CO₂ avoided)</td><td colspan='2' style='text-align:center'>"+(a.emT>b.emT?fmtI((a.profit-b.profit)/(a.emT-b.emT)):"-")+"</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>Profit given up per tonne avoided. Compare with a carbon price when you debrief.</td></tr>";
+  h+=row("Total CO₂ (tonnes)",x=>fmtI(x.emT),"The footprint of the festive-quarter stock. This is what the board's limit caps.");
+  h+=row("Scope 3 upstream: purchased goods (ODM factories)",x=>fmtI(x.emFac/1000)+" t ("+pct(x.emFac,x.emT*1000)+")","Tarang owns no factories or trucks, so Scope 1 and 2 are zero and the whole footprint is Scope 3.");
+  h+=row("Scope 3 upstream: inbound transport",x=>fmtI(x.emTrans/1000)+" t ("+pct(x.emTrans,x.emT*1000)+")","The part you control through mode and lane choice.");
+  h+=row("Transport CO₂ by mode: air / sea / road (t)",x=>{ const t=m=>{ let e=0; PRODS.forEach(p=>IMP.forEach(o=>{ const u=x.units[p][o+m]||0; if(u>0) e+=u*unit(p,o,m).trans; })); return e; }; const road=PRODS.reduce((q,p)=>q+(x.units[p].D||0)*unit(p,"D").trans,0); return fmtI(t("air")/1000)+" / "+fmtI(t("sea")/1000)+" / "+fmtI(road/1000); },"Air is about 200 times as carbon-intensive per tonne-km as sea.");
+  h+=row("Total cost (₹ crore) · Profit (₹ crore)",x=>cr(x.cost)+" · "+cr(x.profit),"The profit leg of the triple bottom line.");
+  h+=row("CO₂ per ₹ crore of cost (tonnes)",x=>(x.emT/(x.cost/1e7)).toFixed(1),"Emissions-per-rupee: how carbon-heavy each rupee of spend is.");
+  h+=row("Largest single ODM's share of units",x=>{ const m=Math.max(...ODMS.map(o=>x.odm[o])); return pct(m,TOT); },"Concentration of volume. Read it with the resilience question: does minimising emissions per rupee concentrate risk?");
+  h+=row("ODM-mode combinations used",x=>String(combos(x)),"Concentrated or spread?");
+  h+="<tr><td>Carbon removed, Round 1 to Round 2</td><td colspan='2' style='text-align:center'>"+fmtI(a.emT-b.emT)+" t ("+pct(a.emT-b.emT,a.emT)+")</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>What the limit actually removed.</td></tr>";
+  h+="<tr><td>Cost of abatement (₹ per tonne CO₂ avoided)</td><td colspan='2' style='text-align:center'>"+(a.emT>b.emT?fmtI((a.profit-b.profit)/(a.emT-b.emT)):"-")+"</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>Where the marginal green spend goes: profit given up per tonne avoided.</td></tr>";
   document.getElementById("tb-sus").innerHTML=h;
 }
 function prodEm(x,p){ let e=0; IMP.forEach(o=>MODES.forEach(m=>{ const u=x.units[p][o+m]||0; if(u>0) e+=u*unit(p,o,m).em; })); const d=x.units[p].D||0; if(d>0) e+=d*unit(p,"D").em; return e; }
@@ -499,7 +493,6 @@ function resultCode(){
   const a=S.r1,b=S.r2; const u=r=>["43","32"].map(p=>IMP.map(o=>MODES.map(m=>Math.round(r.units[p][o+m]/1000)).join("/")).join("-")+"-D"+Math.round(r.units[p].D/1000)).join("|");
   return "SG2|"+S.roll+(S.hint?"|HINT":"")+"|R1="+cr(a.profit)+","+Math.round(a.emT)+","+u(a)+"|R2="+cr(b.profit)+","+Math.round(b.emT)+","+u(b);
 }
-["1","2","3"].forEach((k,i)=>document.getElementById("ta-"+k).addEventListener("input",e=>{ S.ref[["a","b","c"][i]]=e.target.value; save(); }));
 document.getElementById("btn-copy").addEventListener("click",()=>{ const t=document.getElementById("result-code").textContent; try{navigator.clipboard.writeText(t);}catch(e){} document.getElementById("btn-copy").textContent="Copied"; setTimeout(()=>document.getElementById("btn-copy").textContent="Copy result code",1500); });
 document.getElementById("btn-dl").addEventListener("click",()=>{
   const a=S.r1,b=S.r2; const L=[];
@@ -508,7 +501,7 @@ document.getElementById("btn-dl").addEventListener("click",()=>{
     L.push(n,"  Profit (Rs crore): "+cr(r.profit),"  Emissions (t CO2): "+fmtI(r.emT),"  Delivered within 7 days: "+(r.fast*100).toFixed(1)+"%");
     PRODS.forEach(p=>L.push("  "+PNAME[p]+": "+IMP.map(o=>"ODM "+o+" air "+fmtI(r.units[p][o+"air"])+" / sea "+fmtI(r.units[p][o+"sea"])).join("; ")+"; ODM D road "+fmtI(r.units[p].D))); L.push("");
   });
-  L.push("Reflection","1. What did you change between rounds, and why?",S.ref.a||"","2. Which changes cost profit, and which did not?",S.ref.b||"","3. A risk in your Round 1 plan the scoreboard did not show:",S.ref.c||"","","Result code: "+resultCode());
+  L.push("Result code: "+resultCode());
   const blob=new Blob([L.join("\n")],{type:"text/plain"}); const url=URL.createObjectURL(blob); const el=document.createElement("a"); el.href=url; el.download="Sourcing_Game_"+(S.roll||"report")+".txt"; document.body.appendChild(el); el.click(); setTimeout(()=>{document.body.removeChild(el);URL.revokeObjectURL(url);},300);
 });
 
@@ -539,15 +532,23 @@ document.getElementById("exh-modal").addEventListener("click",e=>{ if(e.target.i
 document.getElementById("btn-back").addEventListener("click",()=>showScreen("screen-setup"));
 document.getElementById("btn-begin1").addEventListener("click",()=>startRound(1));
 drawChain(); example(); buildCase(); buildLanded();
-(function restore(){
+(function offerResume(){
   try{
+    ['sg_state_v1','sg_state_v2'].forEach(k=>localStorage.removeItem(k));
     const raw=localStorage.getItem("sg_state_v3"); if(!raw) return; const d=JSON.parse(raw);
-    if(!d||!d.name) return; Object.assign(S,d);
-    document.getElementById("in-name").value=S.name; document.getElementById("in-roll").value=S.roll;
-    if(S.stage==="case"){bar();showScreen("screen-case");}
-    else if(S.stage==="play"){ startRound(S.round); }
-    else if(S.stage==="lock"){ bar(); lockSummary(); showScreen("screen-lock"); }
-    else if(S.stage==="results"){ showResults(); }
+    if(!d||!d.name||!d.stage||d.stage==="setup") return;
+    const where={case:"the exhibits page",play:"Round "+d.round,lock:"waiting for the Round 2 password",results:"the results page"}[d.stage]||"your last screen";
+    document.getElementById("resume-text").textContent="Saved progress found for "+d.name+" (roll "+d.roll+"): you were at "+where+".";
+    document.getElementById("resume-box").style.display="block";
+    document.getElementById("btn-resume").addEventListener("click",()=>{
+      Object.assign(S,d); document.getElementById("in-name").value=S.name; document.getElementById("in-roll").value=S.roll;
+      document.getElementById("resume-box").style.display="none";
+      if(S.stage==="case"){bar();showScreen("screen-case");}
+      else if(S.stage==="play"){ startRound(S.round); }
+      else if(S.stage==="lock"){ bar(); lockSummary(); showScreen("screen-lock"); }
+      else if(S.stage==="results"){ showResults(); }
+    });
+    document.getElementById("btn-fresh").addEventListener("click",()=>{ try{localStorage.removeItem("sg_state_v3");}catch(e){} document.getElementById("resume-box").style.display="none"; });
   }catch(e){}
 })();
 </script>
