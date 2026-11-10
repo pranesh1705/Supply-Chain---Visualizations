@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarang: Sourcing, Carbon and Resilience — SCM</title>
+<style>
+  :root{ --navy:#1b2a4a; --blue:#2f5aa8; --light:#eef2f8; --accent:#c0392b; --green:#1e824c; --gray:#5a6472; --border:#d7dee8; --gold:#c9972f; --amber:#e08e0b; }
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--light);color:#23293a;margin:0;line-height:1.5;}
+  #app{max-width:1100px;margin:0 auto;padding:0 20px 60px;}
+  header.top{background:var(--navy);color:#fff;padding:16px 24px;margin:0 -20px;display:flex;align-items:center;gap:14px;}
+  .logo-badge{height:56px;border-radius:8px;background:#fff;padding:4px 8px;display:flex;align-items:center;}
+  .logo-badge img{height:100%;width:auto;display:block;}
+  header.top h1{margin:0;font-size:1.25rem;} header.top p{margin:3px 0 0;font-size:.82rem;color:#c9d3e8;}
+  .studentbar{display:none;background:#10192e;color:#dbe3f2;padding:9px 24px;margin:0 -20px 8px;font-size:.82rem;gap:4px 22px;flex-wrap:wrap;}
+  .studentbar.show{display:flex;} .studentbar b{color:#fff;}
+  .screen{display:none;padding-top:20px;} .screen.active{display:block;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin-bottom:16px;}
+  h2{font-size:1.15rem;color:var(--navy);margin-top:0;} h3{font-size:1rem;color:var(--navy);margin:0 0 8px;}
+  label{display:block;font-weight:600;font-size:.88rem;margin-bottom:4px;}
+  input[type=text],input[type=password],textarea{width:100%;padding:9px 10px;border:1px solid #b9c3d4;border-radius:5px;font-size:.95rem;font-family:inherit;}
+  textarea{min-height:90px;resize:vertical;}
+  button{background:var(--blue);color:#fff;border:none;border-radius:5px;padding:10px 18px;font-size:.92rem;font-weight:600;cursor:pointer;}
+  button:hover{background:#274a8c;} button:disabled{background:#aab4c5;cursor:not-allowed;}
+  button.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue);} button.secondary:hover{background:var(--light);}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;}
+  th,td{border:1px solid var(--border);padding:6px 8px;text-align:right;} th{background:var(--navy);color:#fff;font-weight:600;}
+  td:first-child,th:first-child{text-align:left;}
+  .muted{color:var(--gray);font-size:.86rem;} .small{font-size:.8rem;}
+  .err{color:var(--accent);font-size:.86rem;display:none;margin-top:6px;} .err.show{display:block;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;} @media(max-width:860px){.two{grid-template-columns:1fr;}}
+  .play{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;} @media(max-width:900px){.play{grid-template-columns:1fr;}}
+  .side{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow-y:auto;padding-right:4px;}
+  .prod{border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;background:#fff;}
+  .prod h3{display:flex;justify-content:space-between;align-items:baseline;} .prod h3 span{font-size:.8rem;font-weight:400;color:var(--gray);}
+  .grp{border-top:1px solid var(--border);padding:8px 0 4px;}
+  .grp .gh{font-size:.82rem;font-weight:700;color:var(--navy);display:flex;justify-content:space-between;}
+  .ctl{display:grid;grid-template-columns:250px 1fr 62px;gap:8px;align-items:center;margin:2px 0;font-size:.83rem;}
+  .ctl .v{text-align:right;font-weight:600;color:var(--navy);} input[type=range]{width:100%;}
+  .tag{display:inline-block;font-size:.7rem;padding:1px 6px;border-radius:9px;color:#fff;} .t-air{background:var(--accent);} .t-sea{background:var(--blue);} .t-road{background:#6b7a90;}
+  .rem{display:flex;justify-content:space-between;background:#f3f6fb;border-radius:5px;padding:6px 9px;font-size:.84rem;margin-top:6px;}
+  .bar{height:9px;background:#e4e9f1;border-radius:5px;overflow:hidden;position:relative;margin-top:3px;} .bar i{display:block;height:100%;background:var(--green);}
+  .bar.amber i{background:var(--amber);} .bar.red i{background:var(--accent);}
+  .bar b{position:absolute;top:-2px;bottom:-2px;width:2px;background:#10192e;}
+  .meter{margin:9px 0;font-size:.84rem;} .meter .row{display:flex;justify-content:space-between;gap:8px;}
+  .meter .row .s{font-weight:700;} .s.ok{color:var(--green);} .s.bad{color:var(--accent);} .s.amber{color:var(--amber);}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .kpi{background:var(--navy);color:#fff;border-radius:8px;padding:10px 12px;} .kpi .l{font-size:.75rem;color:#c9d3e8;} .kpi .n{font-size:1.4rem;font-weight:700;}
+  .kpi.warn{background:var(--accent);}
+  .banner{background:#fff6e5;border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.92rem;}
+  .banner.green{background:#e8f6ee;border-color:var(--green);}
+  code.res{display:block;background:#f3f6fb;border:1px solid var(--border);border-radius:5px;padding:8px;word-break:break-all;font-size:.82rem;}
+  .story h3{margin-top:14px;} .story p{margin:6px 0;} .eq{background:#f3f6fb;border-left:4px solid var(--blue);padding:8px 12px;border-radius:4px;font-size:.9rem;margin:8px 0;}
+  .chip{font-size:.74rem;background:#f3f6fb;border:1px solid var(--border);border-radius:9px;padding:0 6px;color:var(--navy);white-space:nowrap;}
+  .ul{font-size:.74rem;color:var(--gray);margin-left:4px;} .ptot{font-size:.8rem;background:#f3f6fb;border-radius:5px;padding:5px 9px;margin-top:8px;color:var(--navy);}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;} .tabbtn{background:#fff;color:var(--blue);border:1px solid var(--blue);} .tabbtn.active{background:var(--blue);color:#fff;} .tabpane{display:none;} .tabpane.active{display:block;}
+  #print-report{display:none;} @media print{ #app{display:none !important;} #print-report{display:block !important;} body{background:#fff;} th{background:#1b2a4a !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;} table{font-size:10.5px;} h3{margin:14px 0 6px;} tr{page-break-inside:avoid;} }
+  svg text{font-family:inherit;}
+  .rtab td.bad{background:#fdecea;color:#a93226;font-weight:700;} .rtab td.ok{color:var(--green);font-weight:700;}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:#c9d3e8;} .dot.ok{background:var(--green);} .dot.bad{background:var(--accent);}
+  .pill{display:inline-block;background:#fff;border:1px solid var(--border);border-radius:14px;padding:2px 10px;font-size:.8rem;margin:2px 4px 2px 0;}
+  .chk{display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:.88rem;} .chk input{margin-top:4px;}
+  .simbox canvas{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:6px;background:#fff;margin-bottom:6px;} .lg{display:inline-block;width:12px;height:12px;border-radius:2px;margin:0 4px 0 12px;vertical-align:middle;} .simN.active{background:var(--blue);color:#fff;}
+  tr.hit td{background:#fdecea !important;font-weight:700;} .big{font-size:1.05rem;}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="top">
+  <div class="logo-badge"><img id="gl-logo-img" alt="Great Lakes Institute of Management logo"></div>
+  <div class="titles"><h1>Tarang: Sourcing, Carbon and Resilience</h1>
+  <p>Great Lakes Institute of Management, Chennai · Supply Chain Management · Prof. Pranesh Saisridhar</p></div>
+</header>
+<div class="studentbar" id="studentbar"><span><b id="sb-name">—</b></span><span>Roll: <b id="sb-roll">—</b></span><span id="sb-stage"></span></div>
+
+<!-- PAGE 1: SUPPLY CHAIN + STORY -->
+<div class="screen active" id="screen-setup">
+  <div class="banner" id="resume-box" style="display:none;"><b id="resume-text"></b><div style="margin-top:8px;"><button id="btn-resume">Resume where I left off</button> <button id="btn-fresh" class="secondary">Start fresh</button></div></div>
+  <div class="card">
+    <h2>Tarang Electronics: your supply chain</h2>
+    <p><b>Tarang Electronics</b> is a Chennai TV brand that grew from a two-person showroom in T. Nagar into a name on retailers' shelves across South India. It owns no factories: its sets are designed in Chennai and built by four contract manufacturers (ODMs), three in East Asia and one near home. Every Diwali quarter, Tarang's retail partners place their biggest orders of the year, and this quarter <b>100,000 TVs</b> must reach the Chennai distribution centre (DC).</p>
+    <p>You have just been made <b>sourcing lead</b>. The CFO wants the best margin on the festive stock. The sustainability committee has begun asking what that stock costs the planet. Your job is to decide <b>who makes how many sets, and whether each batch flies or sails</b>. Everything you need is on this page and the next.</p>
+    <svg id="chain" viewBox="0 0 800 400" width="100%" role="img" aria-label="Supply chain map: four ODMs connected to the Chennai DC by air, sea and road"></svg>
+    <table id="tb-sc" style="margin-top:12px;"></table>
+    <p class="muted small">Production costs per model are in the exhibits on the next page. Prices and demand: 43-inch 60,000 units at ₹22,000; 32-inch 40,000 units at ₹12,000.</p>
+  </div>
+  <div class="two">
+    <div class="card story">
+      <h2>The profit story</h2>
+      <p>Tarang sells two models: a <b>43-inch</b> (60,000 units, ₹22,000 each) and a <b>32-inch</b> (40,000 units, ₹12,000 each). Revenue is fixed at <b>₹180 crore</b>, so profit moves only with cost.</p>
+      <div class="eq">Profit = Revenue − production cost − freight − cost of capital while goods are in transit</div>
+      <p><b>Production</b> costs differ by ODM; the cheapest ODM (A, Shenzhen) is also the largest, but it cannot make everything. <b>Freight</b> is charged per tonne: air is about twenty times dearer than sea. <b>Capital cost</b> is 14% a year on the production cost of goods still on the water or in the air, so slow sea lanes (24–28 days) cost a little more than they look.</p>
+      <p><b>Festive launch rule:</b> at least <b>30%</b> of all units must reach Chennai within 7 days. Only air shipments and the Indian ODM (D, road, 2 days) qualify. So a purely cheapest plan is not allowed.</p>
+    </div>
+    <div class="card story">
+      <h2>The carbon story</h2>
+      <p>Every TV carries carbon from two places: the <b>factory</b> that built it, and the <b>journey</b> to Chennai.</p>
+      <div class="eq">Emissions = factory emissions + weight (tonnes) × distance (km) × emission factor</div>
+      <p>Tarang's freight forwarder reports these emission factors (kg CO₂ per tonne-km): <b>air 1.44, sea 0.007, road 0.0613</b>. Air is about 200 times more carbon-intensive than sea. Factories differ too: ODM B is the cleanest (85 kg per 43-inch), ODM D the dirtiest (150 kg).</p>
+      <p id="example" class="muted"></p>
+      <p>The tension: the cheapest factory is not the cleanest, and the fast lanes the launch rule needs are the most carbon-heavy. <b>Round 1</b> asks only for profit. In <b>Round 2</b> the board adds an emissions limit.</p>
+    </div>
+  </div>
+  <div class="card story">
+    <h2>The resilience story (Round 3)</h2>
+    <p>After you have planned for profit and for carbon, Tarang's chief risk officer asks a new question: <b>if one ODM stopped tomorrow, how many TVs could Tarang still deliver, and what would the gap cost?</b> Round 3 takes your Round 2 plan and stress-tests it.</p>
+    <div class="eq"><b>Time to recover (TTR):</b> days an ODM needs to return to full output after it stops.<br><b>Time to survive (TTS):</b> days the buffer at the DC keeps retailers supplied after that ODM stops = buffer ÷ the TVs that ODM supplies per day.</div>
+    <div class="eq">If TTS &lt; TTR, Tarang is short by <b>(TTR − TTS) days × that ODM's daily TVs</b>. Retailers sell over about 60 days (1,667 TVs a day), and each TV not delivered costs <b>₹6,000</b> (lost margin plus the retailers' penalty). <span class="muted">Goods already at sea delay the shortage and the recovery by the same number of days, so transit time is left out.</span></div>
+    <div id="lever-svg-setup"></div>
+  <p>Two new levers: a <b>DC buffer</b> (up to 20,000 TVs at ₹1,000 each for the quarter) and a <b>recovery programme</b> at any ODM (₹50 lakh cuts its TTR by 10 days). Each ODM has a <b>10% chance</b> of a disruption this quarter, one at a time. Round 3 has no emissions limit and scores <b>expected profit</b>: profit on an ordinary day minus 10% of the shortfall loss at each ODM.</p>
+  </div>
+  <div class="card">
+    <h3>Enter your details to begin</h3>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;"><label for="in-name">Full name</label><input type="text" id="in-name"></div>
+      <div style="flex:1;min-width:200px;"><label for="in-roll">Roll number</label><input type="text" id="in-roll"></div>
+    </div>
+    <p><button id="btn-start">Continue to the exhibits</button></p>
+  </div>
+</div>
+
+<!-- CASE EXHIBITS -->
+<div class="screen" id="screen-case">
+  <div class="card">
+    <h2>Exhibits</h2>
+    <h3>Exhibit 1. The four ODMs</h3>
+    <table id="tb-odm"></table>
+    <p class="muted small">Capacity is the most an ODM can supply this quarter across both models. Factory emissions are kg CO₂ per TV (the 32-inch is 25% lower).</p>
+    <h3 style="margin-top:14px;">Exhibit 2. Lanes to Chennai</h3>
+    <table id="tb-lane"></table>
+    <p class="muted small">A 43-inch TV weighs 0.022 tonnes and a 32-inch 0.0165 tonnes. Capital cost: 14% a year on production cost × days in transit ÷ 365.</p>
+    <h3 style="margin-top:14px;">Exhibit 3. What one TV costs you, landed in Chennai, and what it emits</h3>
+    <table id="tb-landed"></table>
+    <p class="muted small">Landed cost = production + freight + capital cost in transit. Emissions = factory + journey. These are the numbers to compare when you decide where each batch goes.</p>
+    <h3 style="margin-top:14px;">Exhibit 4. What could stop an ODM (used in Round 3)</h3>
+    <table id="tb-ttr"></table>
+    <p class="muted small">TTR values are assumptions for this case. Other Round 3 numbers: retail sales window 60 days; ₹6,000 per TV not delivered; buffer ₹1,000 per TV (at most 20,000 TVs); recovery programme ₹50 lakh for 10 days off TTR; 10% chance of a disruption at each ODM.</p>
+    <h3 style="margin-top:14px;">What you decide</h3>
+    <p>For each model, for each of ODMs A, B and C, choose how many units ship <span class="tag t-air">air</span> and how many <span class="tag t-sea">sea</span>. Whatever is left of the demand is made by ODM D and trucked <span class="tag t-road">road</span>. Every slider stops at the limit that applies to it, and the meters show how close you are to each constraint.</p>
+    <p><b>Round 1.</b> Make the plan with the highest profit that passes all checks. Submit when you are satisfied. <b>Round 2</b> adds the board's emissions limit. <b>Round 3</b> adds a disruption stress test.</p>
+    <p><button id="btn-back" class="secondary">Back</button> <button id="btn-begin1">Start Round 1</button></p>
+  </div>
+</div>
+
+<!-- PLAY -->
+<div class="screen" id="screen-play">
+  <div class="banner" id="round-banner"></div>
+  <p><button class="secondary" id="btn-exh">View exhibits (costs, lanes, carbon)</button> <button class="secondary" id="btn-load1" style="display:none;">Start from my Round 1 plan</button> <button class="secondary" id="btn-clear" style="display:none;">Clear all sliders to zero</button></p>
+  <div class="play">
+    <div>
+      <div class="prod" id="prod-43"></div>
+      <div class="prod" id="prod-32"></div>
+      <div class="prod" id="prod-res" style="display:none;"></div>
+      <div class="prod" id="alt-card" style="display:none;"></div>
+    </div>
+    <div class="side">
+      <div class="kpis">
+        <div class="kpi" id="k-profit"><div class="l">Profit (₹ crore)</div><div class="n">—</div></div>
+        <div class="kpi" id="k-em"><div class="l">Emissions (tonnes CO₂)</div><div class="n">—</div></div>
+        <div class="kpi" id="k-cost"><div class="l">Total landed cost (₹ crore)</div><div class="n">—</div></div>
+        <div class="kpi" id="k-unit"><div class="l">Cost per TV (₹) · CO₂ per TV (kg)</div><div class="n">—</div></div>
+      </div>
+      <div class="kpis" id="kpis3" style="display:none;">
+        <div class="kpi" id="k-exp"><div class="l">Expected profit (your score, ₹ crore)</div><div class="n">—</div></div>
+        <div class="kpi" id="k-worst"><div class="l">Worst case: biggest ODM stops (₹ crore)</div><div class="n">—</div></div>
+      </div>
+      <div class="card" style="padding:10px 14px;"><button id="btn-submit" disabled>Submit this plan</button> <div class="muted small" id="submit-why" style="margin-top:6px;"></div></div>
+      <div class="card" id="hint-box" style="padding:12px 14px;display:none;"><h3>Stuck?</h3><p class="muted small" style="margin:0 0 6px;">Your instructor can give you a password that loads a good plan to study. Using it is recorded in your report.</p><div style="display:flex;gap:8px;"><input type="password" id="hint-pw" placeholder="Hint password" style="flex:1;"><button id="btn-hint" class="secondary">Load plan</button></div><div class="err" id="hint-err">Incorrect password.</div><p class="muted small" id="hint-msg" style="display:none;margin:8px 0 0;"></p></div>
+      <div class="card" style="padding:12px 14px;"><h3>Constraints: how close are you?</h3><p class="muted small" style="margin:0 0 4px;"><span class="s ok">✓ green</span> fine · <span class="s amber">! amber</span> near a limit, you can still submit · <span class="s bad">✗ red</span> must be fixed before submitting</p><div id="meters"></div></div>
+      <div class="card" id="res-card" style="padding:12px 14px;display:none;"><h3>If one ODM stops: survive time against recovery time</h3><div id="ttsr-chart"></div><div style="display:none;"><table class="rtab" id="tb-ttsr"></table></div><p class="muted small" id="ttsr-note"></p><button class="secondary" id="btn-sim" style="width:100%;">Test this plan on 100+ random quarters</button></div>
+      <div class="card" style="padding:12px 14px;"><h3>Cost breakdown (₹ crore)</h3><table id="tb-cost"></table></div>
+    </div>
+  </div>
+</div>
+
+<div id="exh-modal" style="display:none;position:fixed;inset:0;background:rgba(16,25,46,.6);z-index:50;overflow:auto;padding:24px;">
+  <div class="card" style="max-width:1000px;margin:0 auto;"><div style="display:flex;justify-content:space-between;align-items:center;"><h2 style="margin:0;">Exhibits</h2><button id="btn-exh-close" class="secondary">Close</button></div><div id="exh-body"></div></div>
+</div>
+
+<div id="sim-modal" style="display:none;position:fixed;inset:0;background:rgba(16,25,46,.6);z-index:60;overflow:auto;padding:24px;">
+  <div class="card" style="max-width:900px;margin:0 auto;"><div style="display:flex;justify-content:space-between;align-items:center;"><h2 style="margin:0;">Random quarters: how does your plan fare?</h2><button id="btn-sim-close" class="secondary">Close</button></div><div id="sim-body"></div></div>
+</div>
+
+<!-- LOCK -->
+<div class="screen" id="screen-lock">
+  <div class="card">
+    <h2>Round 1 submitted</h2>
+    <p id="r1-summary"></p>
+    <p>Wait for your instructor, who will give you the password for Round 2.</p>
+    <label for="lock-pw">Password</label><input type="password" id="lock-pw">
+    <div class="err" id="lock-err">Incorrect password. Please try again.</div>
+    <p><button id="btn-lock">Unlock Round 2</button></p>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="tabs" id="res-tabs">
+    <button class="tabbtn active" data-tab="t-sum">Summary</button>
+    <button class="tabbtn" data-tab="t-cmp">Decisions and costs</button>
+    <button class="tabbtn" data-tab="t-sus">Sustainability metrics</button>
+    <button class="tabbtn" data-tab="t-res" id="tabbtn-res" style="display:none;">Resilience</button>
+    <button class="tabbtn" data-tab="t-ref">Report</button>
+  </div>
+  <div class="tabpane active" id="t-sum">
+    <div class="card"><h2 id="sum-title">Your plans</h2><table id="tb-res"></table><p class="muted" id="res-note"></p><p class="muted" id="res-note3"></p></div>
+    <div class="card" id="r3-gate" style="display:none;"><h2>Round 3: a stress test</h2>
+      <p>Next: what happens to your plan when a factory stops? Your instructor will give you the Round 3 password when the class is ready.</p>
+      <label for="r3-pw">Password</label><input type="password" id="r3-pw">
+      <div class="err" id="r3-err">Incorrect password. Please try again.</div>
+      <p><button id="btn-r3">Unlock Round 3</button></p></div>
+  </div>
+  <div class="tabpane" id="t-cmp">
+    <div class="card"><h2>Decisions and costs, side by side</h2>
+      <p class="muted small">Reference plan = a plan that is at or very near the best achievable under that round's rules. Compare where yours differs.</p>
+      <table id="tb-units"></table></div>
+  </div>
+  <div class="tabpane" id="t-sus">
+    <div class="card"><h2>Sustainability scorecard</h2>
+      <p class="muted small">The metrics below are the ones used in class, computed from your submitted plans.</p>
+      <table id="tb-sus"></table></div>
+  </div>
+  <div class="tabpane" id="t-res">
+    <div class="card"><h2>Resilience: when an ODM stops</h2><div id="res-body"></div></div>
+  </div>
+  <div class="tabpane" id="t-ref">
+    <div class="card">
+      <h3>Your report</h3>
+      <p class="muted">Download a PDF of your plans, costs and sustainability metrics, for your own reference.</p>
+      <p><button id="btn-pdf">Download report (PDF)</button></p>
+      <p class="muted small">A print window opens. Choose "Save as PDF" as the destination.</p>
+    </div>
+  </div>
+  </div>
+</div>
+<div id="print-report"></div>
+
+<script>
+const GL_LOGO_B64 = "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";
+document.getElementById("gl-logo-img").src = "data:image/png;base64," + GL_LOGO_B64;
+
+/* ================= MODEL ================= */
+const PASSWORD_ROUND2 = "carbon-26";
+const PASSWORD_ROUND3 = "resilience-26", PASSWORD_HINT1 = "start-26", PASSWORD_HINT3 = "shield-26";
+const PASSWORD_HINT = "nudge-26";      // instructor shares this 20-30 min into Round 2
+const HINT_PLAN = {"43":{Aair:0,Asea:34000,Bair:0,Bsea:26000,Cair:0,Csea:0,D:0},"32":{Aair:0,Asea:0,Bair:0,Bsea:10000,Cair:5000,Csea:0,D:25000}}; // near-optimal, within 0.2% of best   // classroom pacing only, not security
+const EMISSIONS_CAP_T = 10800;
+const FAST_MIN = 0.30, WACC = 0.14, REVENUE = 1800000000;
+const PRODS = ["43","32"], IMP = ["A","B","C"], ODMS = ["A","B","C","D"], MODES = ["air","sea"];
+const PNAME = {"43":"43-inch TV","32":"32-inch TV"};
+const DEM = {"43":60000,"32":40000}, TOT = 100000;
+const WT = {"43":0.022,"32":0.0165};
+const ONAME = {A:"ODM A: Shenzhen, China",B:"ODM B: Taoyuan, Taiwan",C:"ODM C: Hai Phong, Vietnam",D:"ODM D: Sriperumbudur, India"};
+const SHORT = {A:"Shenzhen",B:"Taoyuan",C:"Hai Phong",D:"Sriperumbudur"};
+const PC = {"43":{A:16000,B:17400,C:16600,D:17900},"32":{A:8800,B:9600,C:9100,D:9900}};
+const MFG43 = {A:125,B:85,C:110,D:150};
+const CAP = {A:55000,B:40000,C:30000,D:25000};
+const KM = {air:{A:3900,B:4200,C:3400}, sea:{A:5600,B:5500,C:5200}, road:45};
+const FRT = {air:{A:190000,B:210000,C:180000}, sea:{A:9000,B:9500,C:8500}, road:2500};
+const DAYS = {air:{A:4,B:4,C:4}, sea:{A:28,B:27,C:24}, road:2};
+const EF = {air:1.44, sea:0.007, road:0.0613};
+const STEP = 1000;
+const HINT_PLAN3 = {"plan":{"43":{Aair:0,Asea:55000,Bair:0,Bsea:0,Cair:0,Csea:5000,D:0},"32":{Aair:0,Asea:0,Bair:0,Bsea:0,Cair:5000,Csea:10000,D:25000}},"res":{"buf":7000,"prog":{"A":true,"B":false,"C":false,"D":false}}}; // best plan found for Round 3 (grid search from several starts)
+const BEST_R3 = 393778866; // expected profit of that plan, Round 3 rules
+
+const REF_R1 = {"43":{Aair:0,Asea:55000,Bair:0,Bsea:0,Cair:0,Csea:5000,D:0},"32":{Aair:0,Asea:0,Bair:0,Bsea:0,Cair:5000,Csea:10000,D:25000}};
+const BEST_R1 = 412578866, BEST_R2 = 373726894, MIN_EM_T = 10167; // exact optima of this model (instructor-verified)
+function mfg(p,o){ return MFG43[o]*(p==="43"?1:0.75); }
+function unit(p,o,mode){
+  const m = o==="D" ? "road" : mode;
+  const km = o==="D"?KM.road:KM[m][o], c = o==="D"?FRT.road:FRT[m][o], d = o==="D"?DAYS.road:DAYS[m][o];
+  const prod=PC[p][o], freight=WT[p]*c, pipe=prod*WACC*d/365;
+  return {prod,freight,pipe,cost:prod+freight+pipe,em:mfg(p,o)+WT[p]*km*EF[m],fast:d<=7,days:d,fac:mfg(p,o),trans:WT[p]*km*EF[m]};
+}
+/* plan[p] = {Aair,Asea,Bair,Bsea,Cair,Csea}; D = remainder */
+function evalPlan(plan){
+  const R={prod:0,freight:0,pipe:0,em:0,fastUnits:0,odm:{A:0,B:0,C:0,D:0},dRem:{},units:{},emFac:0,emTrans:0,emMode:{air:0,sea:0,road:0},emOdm:{A:0,B:0,C:0,D:0},uMode:{air:0,sea:0,road:0},tkm:0};
+  PRODS.forEach(p=>{
+    const q=plan[p]; let used=0; R.units[p]={};
+    IMP.forEach(o=>MODES.forEach(m=>{
+      const u=q[o+m]||0; used+=u; R.units[p][o+m]=u; R.odm[o]+=u; if(u<=0) return;
+      const x=unit(p,o,m); R.prod+=u*x.prod; R.freight+=u*x.freight; R.pipe+=u*x.pipe; R.em+=u*x.em; if(x.fast) R.fastUnits+=u; R.emFac+=u*x.fac; R.emTrans+=u*x.trans; R.emMode[m]+=u*x.em; R.emOdm[o]+=u*x.em; R.uMode[m]+=u;
+    }));
+    const d=q.D||0; used+=d; R.dRem[p]=DEM[p]-used; R.units[p].D=d; R.odm.D+=d;
+    if(d>0){ const x=unit(p,"D"); R.prod+=d*x.prod; R.freight+=d*x.freight; R.pipe+=d*x.pipe; R.em+=d*x.em; R.fastUnits+=d; R.emFac+=d*x.fac; R.emTrans+=d*x.trans; R.emMode.road+=d*x.em; R.emOdm.D+=d*x.em; R.uMode.road+=d; }
+  });
+  R.cost=R.prod+R.freight+R.pipe; R.profit=REVENUE-R.cost; R.emT=R.em/1000; R.fast=R.fastUnits/TOT; R.unitCost=R.cost/TOT;
+  return R;
+}
+function feasible(R,round){
+  if(Math.abs(R.dRem["43"])>1e-6||Math.abs(R.dRem["32"])>1e-6) return false;
+  for(const o of ODMS) if(R.odm[o]>CAP[o]+1e-6) return false;
+  if(R.fast<FAST_MIN-1e-9) return false;
+  if(round===2 && R.emT>EMISSIONS_CAP_T+1e-6) return false;
+  return true;
+}
+
+/* ================= STATE ================= */
+function blank(){ return {"43":{Aair:0,Asea:0,Bair:0,Bsea:0,Cair:0,Csea:0,D:0},"32":{Aair:0,Asea:0,Bair:0,Bsea:0,Cair:0,Csea:0,D:0}}; }
+function blankRes(){ return {buf:0,prog:{A:false,B:false,C:false,D:false}}; }
+const S = {name:"",roll:"",stage:"setup",round:1,plan:blank(),r1:null,r2:null,r3:null,res:blankRes(),hints:{1:false,2:false,3:false},ref:{a:"",b:"",c:""}};
+function save(){ try{localStorage.setItem("rg3_state_v1",JSON.stringify(S));}catch(e){} }
+function showScreen(id){ document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active")); document.getElementById(id).classList.add("active"); try{window.scrollTo(0,0);}catch(e){} }
+function bar(){ document.getElementById("studentbar").classList.add("show"); document.getElementById("sb-name").textContent=S.name; document.getElementById("sb-roll").textContent=S.roll;
+  document.getElementById("sb-stage").textContent=S.stage==="play"?("Round "+S.round+" of 3"):""; }
+const fmtI=n=>Math.round(n).toLocaleString("en-IN");
+const cr=n=>(n/1e7).toFixed(2);
+
+/* ================= PAGE 1: MAP + EXAMPLE ================= */
+function drawChain(){
+  const X=lon=>40+(lon-70)*12, Y=lat=>(32-lat)*12;
+  const P={A:[X(114.1),Y(22.5)],B:[X(121.3),Y(25.0)],C:[X(106.7),Y(20.9)]};
+  const CH=[X(80.3),Y(13.1)], SG=[X(103.8),Y(1.3)];
+  let s="<rect x='0' y='0' width='800' height='400' fill='#eaf1fa' rx='8'/>";
+  s+="<text x='300' y='330' font-size='12' fill='#8aa0bf' font-style='italic'>Bay of Bengal</text><text x='640' y='215' font-size='12' fill='#8aa0bf' font-style='italic'>South China Sea</text><text x='60' y='60' font-size='12' fill='#8aa0bf' font-style='italic'>INDIA</text><text x='590' y='60' font-size='12' fill='#8aa0bf' font-style='italic'>EAST ASIA</text>";
+  IMP.forEach(o=>{
+    s+="<polyline points='"+P[o][0]+","+P[o][1]+" "+SG[0]+","+SG[1]+" "+CH[0]+","+CH[1]+"' fill='none' stroke='#2f5aa8' stroke-width='2.5' opacity='.75'/>";
+  });
+  IMP.forEach(o=>{
+    s+="<line x1='"+P[o][0]+"' y1='"+P[o][1]+"' x2='"+CH[0]+"' y2='"+CH[1]+"' stroke='#c0392b' stroke-width='2.5' stroke-dasharray='8 5'/>";
+  });
+  s+="<circle cx='"+SG[0]+"' cy='"+SG[1]+"' r='4' fill='#2f5aa8'/><text x='"+(SG[0]+8)+"' y='"+(SG[1]+4)+"' font-size='11' fill='#2f5aa8'>Singapore (sea waypoint)</text>";
+  IMP.forEach(o=>{
+    const dx=o==="B"?-8:0;
+    s+="<circle cx='"+P[o][0]+"' cy='"+P[o][1]+"' r='15' fill='#1b2a4a'/><text x='"+P[o][0]+"' y='"+(P[o][1]+5)+"' text-anchor='middle' font-size='14' font-weight='700' fill='#fff'>"+o+"</text>";
+    s+="<text x='"+(P[o][0]+(o==="B"?-20:20))+"' y='"+(P[o][1]+(o==="C"?30:-8))+"' text-anchor='"+(o==="B"?"end":"start")+"' font-size='12' font-weight='600' fill='#1b2a4a'>"+SHORT[o]+"</text>";
+  });
+  s+="<rect x='"+(CH[0]-60)+"' y='"+(CH[1]-70)+"' width='120' height='44' rx='8' fill='#c9972f'/><text x='"+CH[0]+"' y='"+(CH[1]-50)+"' text-anchor='middle' font-size='13' font-weight='700' fill='#fff'>Chennai DC</text><text x='"+CH[0]+"' y='"+(CH[1]-35)+"' text-anchor='middle' font-size='10' fill='#fff'>100,000 TVs wanted</text>";
+  s+="<circle cx='"+CH[0]+"' cy='"+CH[1]+"' r='7' fill='#c9972f' stroke='#fff' stroke-width='2'/>";
+  s+="<line x1='"+CH[0]+"' y1='"+CH[1]+"' x2='"+(CH[0]-34)+"' y2='"+(CH[1]+34)+"' stroke='#6b7a90' stroke-width='4'/>";
+  s+="<circle cx='"+(CH[0]-34)+"' cy='"+(CH[1]+34)+"' r='15' fill='#1b2a4a'/><text x='"+(CH[0]-34)+"' y='"+(CH[1]+39)+"' text-anchor='middle' font-size='14' font-weight='700' fill='#fff'>D</text>";
+  s+="<text x='"+(CH[0]-54)+"' y='"+(CH[1]+62)+"' font-size='11' font-weight='600' fill='#1b2a4a'>Sriperumbudur</text><text x='"+(CH[0]-54)+"' y='"+(CH[1]+76)+"' font-size='11' fill='#5a6472'>45 km by road</text>";
+  s+="<g transform='translate(560,300)'><rect width='220' height='84' rx='6' fill='#fff' stroke='#d7dee8'/><line x1='12' y1='20' x2='52' y2='20' stroke='#c0392b' stroke-width='2.5' stroke-dasharray='8 5'/><text x='60' y='24' font-size='12'>Air (direct, 4 days)</text><line x1='12' y1='42' x2='52' y2='42' stroke='#2f5aa8' stroke-width='2.5'/><text x='60' y='46' font-size='12'>Sea (via Singapore, 24–28 days)</text><line x1='12' y1='64' x2='52' y2='64' stroke='#6b7a90' stroke-width='4'/><text x='60' y='68' font-size='12'>Road (2 days)</text></g>";
+  s+="<text x='790' y='392' text-anchor='end' font-size='10' fill='#8aa0bf'>Schematic map, not to scale</text>";
+  document.getElementById("chain").innerHTML=s;
+  let t="<tr><th>ODM</th><th>Capacity (units)</th><th>Factory kg CO₂ per 43\"</th><th>Air: km · days · ₹/t</th><th>Sea: km · days · ₹/t</th></tr>";
+  IMP.forEach(o=>{ t+="<tr><td>"+o+": "+SHORT[o]+"</td><td>"+fmtI(CAP[o])+"</td><td>"+MFG43[o]+"</td><td>"+fmtI(KM.air[o])+" · "+DAYS.air[o]+" · "+fmtI(FRT.air[o])+"</td><td>"+fmtI(KM.sea[o])+" · "+DAYS.sea[o]+" · "+fmtI(FRT.sea[o])+"</td></tr>"; });
+  t+="<tr><td>D: Sriperumbudur</td><td>"+fmtI(CAP.D)+"</td><td>"+MFG43.D+"</td><td colspan='2' style='text-align:center'>Road only: "+KM.road+" km · "+DAYS.road+" days · ₹"+fmtI(FRT.road)+"/t</td></tr>";
+  document.getElementById("tb-sc").innerHTML=t;
+}
+function example(){
+  const a=unit("43","A","air"), b=unit("43","A","sea");
+  document.getElementById("example").innerHTML="Worked example, one 43-inch TV made by ODM A: by <b>sea</b> it carries "+a.fac+" kg (factory) + "+b.trans.toFixed(1)+" kg (journey) = <b>"+(b.em).toFixed(1)+" kg CO₂</b> and costs ₹"+fmtI(b.freight)+" freight; by <b>air</b> it carries "+a.fac+" + "+a.trans.toFixed(1)+" = <b>"+a.em.toFixed(1)+" kg CO₂</b> and costs ₹"+fmtI(a.freight)+" freight. Flying doubles its carbon and adds about ₹"+fmtI(a.freight-b.freight)+" per TV.";
+}
+function buildLanded(){
+  let h="<tr><th rowspan='2'>Source and mode</th><th colspan='2'>43-inch TV (per set)</th><th colspan='2'>32-inch TV (per set)</th><th rowspan='2'>Within 7 days?</th></tr><tr><th>Landed cost (₹)</th><th>Carbon (kg CO₂)</th><th>Landed cost (₹)</th><th>Carbon (kg CO₂)</th></tr>";
+  const rows=[]; IMP.forEach(o=>MODES.forEach(m=>rows.push([o,m]))); rows.push(["D","road"]);
+  rows.forEach(([o,m])=>{
+    const a=unit("43",o,m), b=unit("32",o,m);
+    h+="<tr><td>ODM "+o+" · "+SHORT[o]+" · "+(o==="D"?"road":m)+"</td><td>"+fmtI(a.cost)+"</td><td>"+a.em.toFixed(1)+"</td><td>"+fmtI(b.cost)+"</td><td>"+b.em.toFixed(1)+"</td><td>"+(a.fast?"Yes":"No")+"</td></tr>";
+  });
+  document.getElementById("tb-landed").innerHTML=h;
+}
+function buildCase(){
+  let h="<tr><th>ODM</th><th>Capacity (units)</th><th>Cost 43-inch (₹)</th><th>Cost 32-inch (₹)</th><th>Factory emissions 43-inch (kg CO₂)</th></tr>";
+  ODMS.forEach(o=>{ h+="<tr><td>"+ONAME[o]+"</td><td>"+fmtI(CAP[o])+"</td><td>"+fmtI(PC["43"][o])+"</td><td>"+fmtI(PC["32"][o])+"</td><td>"+MFG43[o]+"</td></tr>"; });
+  document.getElementById("tb-odm").innerHTML=h;
+  let l="<tr><th>Route to Chennai</th><th>Mode</th><th>Distance (km)</th><th>Freight (₹ per tonne)</th><th>Transit (days)</th><th>kg CO₂ per tonne-km</th></tr>";
+  IMP.forEach(o=>MODES.forEach(m=>{ l+="<tr><td>"+ONAME[o]+"</td><td>"+(m==="air"?"Air":"Sea")+"</td><td>"+fmtI(KM[m][o])+"</td><td>"+fmtI(FRT[m][o])+"</td><td>"+DAYS[m][o]+"</td><td>"+EF[m]+"</td></tr>"; }));
+  l+="<tr><td>"+ONAME.D+"</td><td>Road</td><td>"+KM.road+"</td><td>"+fmtI(FRT.road)+"</td><td>"+DAYS.road+"</td><td>"+EF.road+"</td></tr>";
+  document.getElementById("tb-lane").innerHTML=l;
+}
+
+/* ================= PLAY UI ================= */
+function otherUse(p,o,skipKey){ // units of ODM o already used by everything except slider (p,skipKey)
+  let t=0;
+  PRODS.forEach(pp=>Object.keys(S.plan[pp]).forEach(k=>{ if(k[0]!==o) return; if(pp===p&&k===skipKey) return; t+=S.plan[pp][k]||0; }));
+  return t;
+}
+function sliderMax(p,key){
+  const o=key[0];
+  let others=0; Object.keys(S.plan[p]).forEach(k=>{ if(k!==key) others+=S.plan[p][k]; });
+  const m=Math.min(DEM[p]-others, CAP[o]-otherUse(p,o,key));
+  return Math.max(0,Math.floor(m/STEP)*STEP);
+}
+function ctl(p,o,m){
+  const k=o==="D"?"D":o+m; const u=unit(p,o,m);
+  return "<div class='ctl'><span><span class='tag t-"+m+"'>"+(o==="D"?"road":m)+"</span> <span class='chip'>Cost <b>₹"+fmtI(u.cost)+"</b>/TV</span> <span class='chip'>Carbon <b>"+u.em.toFixed(0)+" kg</b>/TV</span></span><input type='range' min='0' max='"+STEP+"' step='"+STEP+"' value='"+S.plan[p][k]+"' data-p='"+p+"' data-k='"+k+"' aria-label='"+PNAME[p]+" from ODM "+o+" by "+m+"'><span class='v' id='v-"+p+k+"'>0</span></div><div class='muted small lim' id='lim-"+p+k+"' style='margin:-2px 0 2px;'></div>";
+}
+function prodHTML(p){
+  let h="<h3>"+PNAME[p]+" <span>"+fmtI(DEM[p])+" units to place</span></h3>";
+  IMP.forEach(o=>{
+    h+="<div class='grp'><div class='gh'><span>"+ONAME[o]+"</span><span id='gu-"+p+o+"'></span></div>"+ctl(p,o,"air")+ctl(p,o,"sea")+
+       "<div class='bar' id='gb-"+p+o+"'><i></i></div><div class='muted small' id='gt-"+p+o+"'></div></div>";
+  });
+  h+="<div class='grp'><div class='gh'><span>"+ONAME.D+"</span><span id='gu-"+p+"D'></span></div>"+ctl(p,"D","road")+"<div class='bar' id='gb-"+p+"D'><i></i></div><div class='muted small' id='gt-"+p+"D'></div></div>";
+  h+="<div class='rem'><span><b>Demand check:</b> units placed for this model</span><b id='rem-"+p+"'></b></div><div class='bar' id='db-"+p+"'><i></i></div><div class='ptot' id='pt-"+p+"'></div>";
+  return h;
+}
+function renderControls(){
+  PRODS.forEach(p=>{ document.getElementById("prod-"+p).innerHTML=prodHTML(p); });
+  document.querySelectorAll("#screen-play input[type=range][data-p]").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const p=inp.dataset.p,k=inp.dataset.k; let v=+inp.value;
+      const mx=sliderMax(p,k); if(v>mx) v=mx;
+      S.plan[p][k]=v; refresh();
+    });
+  });
+}
+function barClass(frac){ return frac>1+1e-9?"red":(frac>=0.9?"amber":""); }
+function setBar(el,frac){ el.className="bar "+barClass(frac); el.querySelector("i").style.width=Math.min(100,frac*100)+"%"; }
+function refresh(){
+  // clamp stored values defensively, then set slider max and values
+  PRODS.forEach(p=>Object.keys(S.plan[p]).forEach(k=>{ const mx=sliderMax(p,k); if(S.plan[p][k]>mx) S.plan[p][k]=mx; if(S.plan[p][k]<0) S.plan[p][k]=0; }));
+  const R=evalPlan(S.plan);
+  PRODS.forEach(p=>{
+    Object.keys(S.plan[p]).forEach(k=>{
+      const inp=document.querySelector("input[data-p='"+p+"'][data-k='"+k+"']"); if(!inp) return;
+      const mx=sliderMax(p,k); inp.max=mx; inp.value=S.plan[p][k];
+      document.getElementById("v-"+p+k).textContent=fmtI(S.plan[p][k]);
+      (function(){ const o=k[0]; let oth=0; Object.keys(S.plan[p]).forEach(kk=>{ if(kk!==k) oth+=S.plan[p][kk]; });
+        const mdem=DEM[p]-oth, mcap=CAP[o]-otherUse(p,k[0]==="D"?"D":o,k); const el=document.getElementById("lim-"+p+k); if(!el) return;
+        const free=Math.min(DEM[p],CAP[o]);
+        if(mx>=free){ el.textContent=""; }
+        else if(mdem<=mcap){ el.textContent="Can't go above "+fmtI(mx)+": only "+fmtI(Math.max(0,mdem))+" units of the "+PNAME[p]+" are still unplaced. Lower another source first to free units."; }
+        else { el.textContent="Can't go above "+fmtI(mx)+": ODM "+o+" capacity is "+fmtI(CAP[o])+" and "+fmtI(CAP[o]-mcap)+" units are already used by your other choices."; }
+      })();
+    });
+    IMP.forEach(o=>{
+      const use=R.odm[o], f=use/CAP[o];
+      setBar(document.getElementById("gb-"+p+o),f);
+      document.getElementById("gu-"+p+o).textContent=fmtI((S.plan[p][o+"air"]||0)+(S.plan[p][o+"sea"]||0))+" units";
+      document.getElementById("gt-"+p+o).textContent="ODM "+o+" total (both models): "+fmtI(use)+" of "+fmtI(CAP[o])+" capacity ("+Math.round(f*100)+"%). Remaining: "+fmtI(Math.max(0,CAP[o]-use));
+    });
+    (function(){ const one={}; PRODS.forEach(pp=>{one[pp]={};Object.keys(S.plan[pp]).forEach(k=>{one[pp][k]=pp===p?S.plan[pp][k]:0;});});
+      const n=DEM[p];
+      // remove the other product's all-ODM-D default by recomputing this product only
+      let c=0,e=0; const q=S.plan[p]; IMP.forEach(o=>MODES.forEach(m=>{const u=q[o+m]||0;if(u>0){const x=unit(p,o,m);c+=u*x.cost;e+=u*x.em;}}));
+      const d=q.D||0; const xd=unit(p,"D"); c+=d*xd.cost; e+=d*xd.em;
+      document.getElementById("pt-"+p).innerHTML="Running total for this model: landed cost <b>₹"+cr(c)+" crore</b> (₹"+fmtI(c/n)+" per TV) · emissions <b>"+fmtI(e/1000)+" t CO₂</b> ("+(e/n).toFixed(0)+" kg per TV)";
+    })();
+    const placed=DEM[p]-R.dRem[p], fD=R.odm.D/CAP.D;
+    document.getElementById("rem-"+p).textContent=fmtI(placed)+" of "+fmtI(DEM[p])+(R.dRem[p]>0?" ("+fmtI(R.dRem[p])+" still to assign)":" ✓");
+    const db=document.getElementById("db-"+p); db.className="bar "+(R.dRem[p]===0?"":"red"); db.querySelector("i").style.width=Math.min(100,placed/DEM[p]*100)+"%";
+    document.getElementById("gu-"+p+"D").textContent=fmtI(S.plan[p].D||0)+" units";
+    setBar(document.getElementById("gb-"+p+"D"),fD);
+    document.getElementById("gt-"+p+"D").textContent="ODM D total (both models): "+fmtI(R.odm.D)+" of "+fmtI(CAP.D)+" capacity ("+Math.round(fD*100)+"%). Remaining: "+fmtI(Math.max(0,CAP.D-R.odm.D));
+  });
+  // meters
+  const M=[]; const add=(label,val,lim,txt,status,markerFrac)=>M.push({label,val,lim,txt,status,markerFrac});
+  ODMS.forEach(o=>{ const f=R.odm[o]/CAP[o]; add("ODM "+o+" capacity",f,1,fmtI(R.odm[o])+" / "+fmtI(CAP[o])+" units",f>1+1e-9?"bad":(f>=0.9?"amber":"ok")); });
+  PRODS.forEach(p=>{ const pl=DEM[p]-R.dRem[p]; add(PNAME[p]+" demand to fulfil",pl/DEM[p],1,fmtI(pl)+" / "+fmtI(DEM[p])+" units",R.dRem[p]===0?"ok":"bad"); });
+  const ff=R.fast/FAST_MIN; add("Delivered within 7 days (need at least 30%)",Math.min(1,R.fast/0.6),1,(R.fast*100).toFixed(1)+"% (min 30%)",R.fast>=FAST_MIN-1e-9?"ok":"bad",0.5);
+  if(S.round===2){ const f=R.emT/EMISSIONS_CAP_T; add("Emissions limit",f,1,fmtI(R.emT)+" / "+fmtI(EMISSIONS_CAP_T)+" t CO₂",f>1+1e-9?"bad":(f>=0.97?"amber":"ok")); }
+  const mt=document.getElementById("meters"); mt.innerHTML=M.map((m,i)=>"<div class='meter'><div class='row'><span>"+m.label+"</span><span class='s "+m.status+"'>"+(m.status==="bad"?"✗ ":m.status==="amber"?"! ":"✓ ")+m.txt+"</span></div><div class='bar "+(m.status==="bad"?"red":m.status==="amber"?"amber":"")+"' id='mb"+i+"'><i style='width:"+Math.min(100,m.val*100)+"%'></i>"+(m.markerFrac?"<b style='left:"+(m.markerFrac*100)+"%'></b>":"")+"</div></div>").join("");
+  const set=(id,v,warn)=>{const e=document.getElementById(id); e.querySelector(".n").textContent=v; e.classList.toggle("warn",!!warn);};
+  set("k-profit",cr(R.profit)); set("k-cost",cr(R.cost)); set("k-unit",fmtI(R.unitCost)+" · "+(R.em/TOT).toFixed(0)); set("k-em",fmtI(R.emT),S.round===2&&R.emT>EMISSIONS_CAP_T+1e-6);
+  document.getElementById("tb-cost").innerHTML="<tr><th>Item</th><th>₹ crore</th></tr><tr><td>Revenue</td><td>"+cr(REVENUE)+"</td></tr><tr><td>Production</td><td>"+cr(R.prod)+"</td></tr><tr><td>Freight</td><td>"+cr(R.freight)+"</td></tr><tr><td>Capital cost in transit</td><td>"+cr(R.pipe)+"</td></tr><tr><td><b>Profit</b></td><td><b>"+cr(R.profit)+"</b></td></tr>";
+  if(S.round===3) refreshRes(R);
+  const ok=feasible(R,S.round); document.getElementById("btn-submit").disabled=!ok;
+  const why=[]; PRODS.forEach(p=>{ if(R.dRem[p]>0) why.push("place the remaining "+fmtI(R.dRem[p])+" units of the "+PNAME[p]); if(R.dRem[p]<0) why.push("reduce the "+PNAME[p]+" allocation by "+fmtI(-R.dRem[p])); });
+  ODMS.forEach(o=>{ if(R.odm[o]>CAP[o]+1e-6) why.push("ODM "+o+" is over capacity"); });
+  if(R.fast<FAST_MIN-1e-9) why.push("raise the share delivered within 7 days to 30%");
+  if(S.round===2&&R.emT>EMISSIONS_CAP_T+1e-6) why.push("bring emissions under "+fmtI(EMISSIONS_CAP_T)+" t");
+  document.getElementById("submit-why").textContent=ok?"":"To submit: "+why.join("; ")+".";
+}
+function startRound(n){
+  S.round=n; S.stage="play"; bar();
+  const b=document.getElementById("round-banner");
+  if(n===1){ b.className="banner"; b.innerHTML="<b>Round 1: maximise profit.</b> For each model, choose air and sea units from ODMs A, B and C. ODM D makes the rest. Sliders stop at the limits; watch the meters on the right."; }
+  else if(n===2){ b.className="banner green"; b.innerHTML="<b>Round 2: new board rule.</b> Tarang's board has adopted an emissions limit of <b>"+fmtI(EMISSIONS_CAP_T)+" tonnes CO₂ per quarter</b>. Round 1 for reference: profit ₹"+cr(S.r1.profit)+" crore, "+fmtI(S.r1.emT)+" tonnes. Start again from zero and maximise profit within the limit."; }
+  else { b.className="banner green"; b.innerHTML="<b>Round 3: a stress test.</b> Your Round 2 plan is loaded. Any one ODM may stop this quarter (10% chance each). Protect Tarang only if it pays: the box under the levers shows the cost and the benefit. Your score is expected profit."; }
+  document.getElementById("hint-box").style.display="block";
+  document.getElementById("btn-load1").style.display=n>=2?"inline-block":"none"; document.getElementById("btn-load1").textContent=n===3?"Start from my Round 2 plan":"Start from my Round 1 plan";
+  document.getElementById("btn-clear").style.display=n>=2?"inline-block":"none";
+  ["prod-res","alt-card","kpis3","res-card"].forEach(id=>{ document.getElementById(id).style.display=n===3?"block":"none"; });
+  if(n===3) renderResControls();
+  renderControls(); refresh(); save(); showScreen("screen-play");
+}
+function lockSummary(){
+  const r=S.r1, g=BEST_R1-r.profit, pct=r.profit/BEST_R1*100;
+  document.getElementById("r1-summary").innerHTML="Your Round 1 plan: profit <b>₹"+cr(r.profit)+" crore</b>, emissions <b>"+fmtI(r.emT)+" tonnes CO₂</b>.<br>Best achievable profit under the Round 1 rules: <b>₹"+cr(BEST_R1)+" crore</b>. You reached <b>"+pct.toFixed(1)+"%</b> of it"+(g>1e5?" (₹"+cr(g)+" crore left on the table).":".");
+}
+function record(){ const R=evalPlan(S.plan); return summarize(R); }
+function summarize(R){ return {profit:R.profit,emT:R.emT,fast:R.fast,cost:R.cost,prod:R.prod,freight:R.freight,pipe:R.pipe,emFac:R.emFac,emTrans:R.emTrans,emMode:R.emMode,emOdm:R.emOdm,uMode:R.uMode,odm:R.odm,units:JSON.parse(JSON.stringify(R.units))}; }
+document.getElementById("btn-submit").addEventListener("click",()=>{
+  const rec=record();
+  if(S.round===1){ S.r1=rec; S.stage="lock"; save();
+    lockSummary(); showScreen("screen-lock"); }
+  else if(S.round===2){ S.r2=rec; S.stage="results"; save(); showResults(); }
+  else { rec.res=JSON.parse(JSON.stringify(S.res)); S.r3=rec; S.stage="results"; save(); showResults(); }
+});
+document.getElementById("btn-lock").addEventListener("click",()=>{
+  const v=document.getElementById("lock-pw").value;
+  if(v===PASSWORD_ROUND2){ document.getElementById("lock-err").classList.remove("show"); document.getElementById("lock-pw").value=""; S.plan=blank(); startRound(2); }
+  else document.getElementById("lock-err").classList.add("show");
+});
+
+/* ================= RESULTS ================= */
+function showResults(){
+  bar(); const a=S.r1,b=S.r2,c=S.r3;
+  const cols=[["Round 1: profit only",a,BEST_R1],["Round 2: with emissions limit",b,BEST_R2]]; if(c) cols.push(["Round 3: with disruption risk",c,null]);
+  const E=cols.map(x=>evalRes(x[1],planRes(x[1])));
+  const dP=b.profit-a.profit, dE=b.emT-a.emT;
+  let t="<tr><th></th>"+cols.map(x=>"<th>"+x[0]+"</th>").join("")+"<th>Change, Round 1 to 2</th></tr>";
+  const row=(l,f,chg)=>"<tr><td>"+l+"</td>"+cols.map((x,i)=>"<td>"+f(x,i)+"</td>").join("")+"<td>"+(chg||"")+"</td></tr>";
+  t+=row("Profit on an ordinary day (₹ crore)",(x,i)=>cr(E[i].profitAfter),(dP>=0?"+":"−")+cr(Math.abs(dP)));
+  t+=row("Profit change from Round 1",(x,i)=>i===0?"":((E[i].profitAfter-E[0].profitAfter)/E[0].profitAfter*100).toFixed(1)+"%",(dP/a.profit*100).toFixed(1)+"%");
+  t+=row("Emissions (tonnes CO₂)",x=>fmtI(x[1].emT),(dE>=0?"+":"−")+fmtI(Math.abs(dE)));
+  t+=row("Best achievable profit under the rules (₹ crore)",x=>x[2]?cr(x[2]):"–");
+  t+=row("Your profit as % of best achievable",x=>x[2]?(x[1].profit/x[2]*100).toFixed(1)+"%":"–");
+  t+=row("Delivered within 7 days",x=>(x[1].fast*100).toFixed(1)+"%");
+  t+=row("<b>Expected profit with disruption risk (₹ crore)</b>",(x,i)=>"<b>"+cr(E[i].expProfit)+"</b>");
+  t+=row("Worst case: weakest ODM stops (₹ crore)",(x,i)=>cr(E[i].worst));
+  t+=row("DC buffer · recovery programmes",x=>{ const r=planRes(x[1]); return fmtI(r.buf)+" TVs · "+(ODMS.filter(o=>r.prog[o]).join(", ")||"none"); });
+  document.getElementById("tb-res").innerHTML=t;
+  document.getElementById("sum-title").textContent=c?"Your three plans":"Your two plans";
+  document.getElementById("res-note").textContent = (dE<0 ? ("Cost of cutting emissions in your plan: about ₹"+fmtI(-dP/(-dE))+" of profit per tonne of CO₂ avoided.") : "Your Round 2 plan did not reduce emissions relative to Round 1.")+" The lowest emissions any feasible plan can reach is about "+fmtI(MIN_EM_T)+" tonnes. Rows for Rounds 1 and 2 show how those plans would fare with no buffer and no recovery programmes.";
+  if(c){ const unprot=evalRes(c,ZERORES); document.getElementById("res-note3").textContent="Round 3: your expected profit is ₹"+cr(E[2].expProfit)+" crore against ₹"+cr(BEST_R3)+" crore for the best plan the instructor found. Your buffer and programmes added ₹"+cr(E[2].expProfit-unprot.expProfit)+" crore of expected profit compared with running the same volumes unprotected."; }
+  else document.getElementById("res-note3").textContent="";
+  document.getElementById("r3-gate").style.display=c?"none":"block";
+  document.getElementById("tabbtn-res").style.display=c?"inline-block":"none";
+  buildComparison(a,b,c); buildSus(a,b,c); if(c) buildResTab(c);
+  showScreen("screen-results");
+}
+function buildResTab(c){
+  const R=evalPlan(unitsToPlan(c.units)), E=evalRes(c,planRes(c));
+  const scn=(hit)=>{ let t="<table><tr><th>Scenario</th><th>TVs not delivered</th><th>Profit (₹ crore)</th><th>Change from an ordinary day (₹ crore)</th></tr><tr><td>No disruption</td><td>0</td><td>"+cr(E.profitAfter)+"</td><td>–</td></tr>";
+    ODMS.forEach(o=>{ const r=E.odm[o]; t+="<tr"+(hit===o?" class='hit'":"")+"><td>ODM "+o+" ("+SHORT[o]+") stops</td><td>"+fmtI(r.lost)+"</td><td>"+cr(E.profitAfter-r.loss)+"</td><td>"+(r.loss?"−"+cr(r.loss):"–")+"</td></tr>"; });
+    return t+"</table>"; };
+  let h="<p>Your Round 3 plan against each single-ODM stoppage.</p><div id='scn-wrap'>"+scn()+"</div><div id='draw-out' class='banner' style='display:none;margin-top:10px;'></div><p><button class='secondary' id='btn-draw'>Draw a disruption</button></p>";
+  h+="<h3 style='margin-top:18px;'>Try your plan on many random quarters</h3>"+simHTML("sr");
+  document.getElementById("res-body").innerHTML=h;
+  initSim("sr",()=>({R:evalPlan(unitsToPlan(c.units)),res:planRes(c)}));
+  document.getElementById("btn-draw").addEventListener("click",()=>{
+    const o=ODMS[Math.floor(Math.random()*4)], r=E.odm[o], box=document.getElementById("draw-out"); box.style.display="block";
+    box.innerHTML="<b>ODM "+o+" ("+CAUSE[o]+") stops.</b> "+(r.lost>0?"Your buffer lasts "+(r.tts>99?"99+":r.tts.toFixed(1))+" days, the ODM needs "+r.ttr+" to recover, and "+fmtI(r.lost)+" TVs go undelivered. Profit this quarter: ₹"+cr(E.profitAfter-r.loss)+" crore.":"Your buffer outlasts the recovery"+(r.u===0?" (and you had placed no TVs there)":"")+". No TVs are lost. Profit this quarter: ₹"+cr(E.profitAfter)+" crore.");
+    document.getElementById("scn-wrap").innerHTML=scn(o);
+  });
+}
+function buildComparison(a,b,c){
+  const C=[["Your Round 1",a,ZERORES],["Reference Round 1",summarize(evalPlan(REF_R1)),ZERORES],["Your Round 2",b,ZERORES],["Reference Round 2",summarize(evalPlan(HINT_PLAN)),ZERORES]];
+  if(c){ C.push(["Your Round 3",c,planRes(c)]); C.push(["Reference Round 3",summarize(evalPlan(HINT_PLAN3.plan)),HINT_PLAN3.res]); }
+  const n=C.length+1, E=C.map(x=>evalRes(x[1],x[2]));
+  let h="<tr><th>Decision (units)</th>"+C.map(x=>"<th>"+x[0]+"</th>").join("")+"</tr>";
+  PRODS.forEach(p=>{ h+="<tr><td colspan='"+n+"' style='background:#eef2f8;font-weight:700;text-align:left'>"+PNAME[p]+"</td></tr>";
+    IMP.forEach(o=>MODES.forEach(m=>{ h+="<tr><td>ODM "+o+" · "+SHORT[o]+" · "+m+"</td>"+C.map(x=>"<td>"+fmtI(x[1].units[p][o+m])+"</td>").join("")+"</tr>"; }));
+    h+="<tr><td>ODM D · Sriperumbudur · road</td>"+C.map(x=>"<td>"+fmtI(x[1].units[p].D)+"</td>").join("")+"</tr>"; });
+  h+="<tr><td colspan='"+n+"' style='background:#eef2f8;font-weight:700;text-align:left'>ODM load (both models)</td></tr>";
+  ODMS.forEach(o=>{ h+="<tr><td>ODM "+o+" (capacity "+fmtI(CAP[o])+")</td>"+C.map(x=>"<td>"+fmtI(x[1].odm[o])+" ("+Math.round(x[1].odm[o]/CAP[o]*100)+"%)</td>").join("")+"</tr>"; });
+  h+="<tr><td colspan='"+n+"' style='background:#eef2f8;font-weight:700;text-align:left'>Costs (₹ crore)</td></tr>";
+  const row=(l,f)=>"<tr><td>"+l+"</td>"+C.map((x,i)=>"<td>"+f(x[1],i,x[2])+"</td>").join("")+"</tr>";
+  h+=row("Revenue",()=>cr(REVENUE))+row("Production cost",x=>cr(x.prod))+row("Freight",x=>cr(x.freight))+row("Capital cost in transit",x=>cr(x.pipe))+row("<b>Total landed cost</b>",x=>"<b>"+cr(x.cost)+"</b>")+row("DC buffer (TVs)",(x,i,r)=>fmtI(r.buf))+row("Recovery programmes at",(x,i,r)=>ODMS.filter(o=>r.prog[o]).join(", ")||"none")+row("Buffer and programmes (₹ crore)",(x,i)=>cr(E[i].bufCost+E[i].progCost))+row("<b>Profit on an ordinary day</b>",(x,i)=>"<b>"+cr(E[i].profitAfter)+"</b>")+row("Expected shortfall loss",(x,i)=>cr(E[i].expLoss))+row("<b>Expected profit</b>",(x,i)=>"<b>"+cr(E[i].expProfit)+"</b>")+row("Worst case (weakest ODM stops)",(x,i)=>cr(E[i].worst))+row("Landed cost per TV (₹)",x=>fmtI(x.cost/TOT))+row("Emissions (tonnes CO₂)",x=>fmtI(x.emT))+row("Delivered within 7 days",x=>(x.fast*100).toFixed(1)+"%");
+  document.getElementById("tb-units").innerHTML=h;
+}
+function buildSus(a,b,c){
+  const C=[["Round 1",a],["Round 2",b]]; if(c) C.push(["Round 3",c]);
+  const row=(l,f,why)=>"<tr><td>"+l+"</td>"+C.map(x=>"<td>"+f(x[1])+"</td>").join("")+"<td style='text-align:left;font-size:.8rem;color:#5a6472'>"+why+"</td></tr>";
+  const pct=(x,y)=>y?(x/y*100).toFixed(1)+"%":"-";
+  const combos=x=>{ const seen={}; PRODS.forEach(p=>Object.keys(x.units[p]).forEach(k=>{ if((x.units[p][k]||0)>0) seen[k]=1; })); return Object.keys(seen).length; };
+  let h="<tr><th>Metric</th>"+C.map(x=>"<th>"+x[0]+"</th>").join("")+"<th>What it tells you</th></tr>";
+  h+=row("Total CO₂ (tonnes)",x=>fmtI(x.emT),"The footprint of the festive-quarter stock. This is what the board's limit caps in Round 2.");
+  h+=row("Scope 3 upstream: purchased goods (ODM factories)",x=>fmtI(x.emFac/1000)+" t ("+pct(x.emFac,x.emT*1000)+")","Tarang owns no factories or trucks, so Scope 1 and 2 are zero and the whole footprint is Scope 3.");
+  h+=row("Scope 3 upstream: inbound transport",x=>fmtI(x.emTrans/1000)+" t ("+pct(x.emTrans,x.emT*1000)+")","The part you control through mode and lane choice.");
+  h+=row("Transport CO₂ by mode: air / sea / road (t)",x=>{ const t=m=>{ let e=0; PRODS.forEach(p=>IMP.forEach(o=>{ const u=x.units[p][o+m]||0; if(u>0) e+=u*unit(p,o,m).trans; })); return e; }; const road=PRODS.reduce((q,p)=>q+(x.units[p].D||0)*unit(p,"D").trans,0); return fmtI(t("air")/1000)+" / "+fmtI(t("sea")/1000)+" / "+fmtI(road/1000); },"Air is about 200 times as carbon-intensive per tonne-km as sea.");
+  h+=row("Total cost (₹ crore) · Profit before buffer and programmes (₹ crore)",x=>cr(x.cost)+" · "+cr(x.profit),"The profit leg of the triple bottom line.");
+  h+=row("CO₂ per ₹ crore of cost (tonnes)",x=>(x.emT/(x.cost/1e7)).toFixed(1),"Emissions-per-rupee: how carbon-heavy each rupee of spend is.");
+  h+=row("Largest single ODM's share of units",x=>{ const m=Math.max(...ODMS.map(o=>x.odm[o])); return pct(m,TOT); },"Concentration of volume. Round 3 asks what that concentration costs when an ODM stops.");
+  h+=row("Weakest ODM when it stops (no protection): TVs not delivered",x=>{ const e=evalRes(x,ZERORES); return "ODM "+e.worstO+": "+fmtI(e.odm[e.worstO].lost); },"The resilience leg: where each plan is most exposed.");
+  h+=row("ODM-mode combinations used",x=>String(combos(x)),"Concentrated or spread?");
+  h+="<tr><td>Carbon removed, Round 1 to Round 2</td><td colspan='"+C.length+"' style='text-align:center'>"+fmtI(a.emT-b.emT)+" t ("+pct(a.emT-b.emT,a.emT)+")</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>What the limit actually removed.</td></tr>";
+  h+="<tr><td>Cost of abatement (₹ per tonne CO₂ avoided)</td><td colspan='"+C.length+"' style='text-align:center'>"+(a.emT>b.emT?fmtI((a.profit-b.profit)/(a.emT-b.emT)):"-")+"</td><td style='text-align:left;font-size:.8rem;color:#5a6472'>Where the marginal green spend goes: profit given up per tonne avoided.</td></tr>";
+  document.getElementById("tb-sus").innerHTML=h;
+}
+
+function prodEm(x,p){ let e=0; IMP.forEach(o=>MODES.forEach(m=>{ const u=x.units[p][o+m]||0; if(u>0) e+=u*unit(p,o,m).em; })); const d=x.units[p].D||0; if(d>0) e+=d*unit(p,"D").em; return e; }
+document.querySelectorAll("#res-tabs .tabbtn").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#res-tabs .tabbtn").forEach(x=>x.classList.toggle("active",x===b));
+  document.querySelectorAll("#screen-results .tabpane").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));
+}));
+function resultCode(){
+  const a=S.r1,b=S.r2; const u=r=>["43","32"].map(p=>IMP.map(o=>MODES.map(m=>Math.round(r.units[p][o+m]/1000)).join("/")).join("-")+"-D"+Math.round(r.units[p].D/1000)).join("|");
+  return "SG2|"+S.roll+(anyHint()?"|HINT":"")+"|R1="+cr(a.profit)+","+Math.round(a.emT)+","+u(a)+"|R2="+cr(b.profit)+","+Math.round(b.emT)+","+u(b);
+}
+
+/* ================= RESILIENCE (ROUND 3) ================= */
+const SALES_DAYS=60, LOSS_PER_TV=6000, BUF_COST=1000, BUF_CAP=20000, PROG_COST=5000000, PROG_CUT=10, P_FAIL=0.10;
+const TTR={A:30,B:45,C:21,D:14};
+const CAUSE={A:"typhoon and port closure",B:"earthquake",C:"flood",D:"flood in Chennai"};
+const ZERORES={buf:0,prog:{A:false,B:false,C:false,D:false}};
+function anyHint(){ return !!(S.hints&&(S.hints[1]||S.hints[2]||S.hints[3])); }
+function hintRounds(){ return [1,2,3].filter(r=>S.hints&&S.hints[r]); }
+function planRes(x){ return x&&x.res?x.res:ZERORES; }
+function unitsToPlan(u){ const pl=blank(); PRODS.forEach(p=>Object.keys(pl[p]).forEach(k=>{ pl[p][k]=(u[p]&&u[p][k])||0; })); return pl; }
+function evalRes(R,res){
+  const out={odm:{}}; let sumLoss=0;
+  ODMS.forEach(o=>{
+    const u=R.odm[o], daily=u/SALES_DAYS, prog=!!(res.prog&&res.prog[o]), ttr=Math.max(0,TTR[o]-(prog?PROG_CUT:0));
+    const tts=daily>0?res.buf/daily:Infinity;
+    const lost=u>0?Math.min(u,Math.max(0,daily*ttr-res.buf)):0, loss=lost*LOSS_PER_TV;
+    out.odm[o]={u:u,daily:daily,ttr:ttr,tts:tts,lost:lost,loss:loss}; sumLoss+=loss;
+  });
+  out.bufCost=res.buf*BUF_COST; out.progCost=ODMS.filter(o=>res.prog&&res.prog[o]).length*PROG_COST;
+  out.profitAfter=R.profit-out.bufCost-out.progCost;
+  out.expLoss=P_FAIL*sumLoss; out.expProfit=out.profitAfter-out.expLoss;
+  out.worstO=ODMS.slice().sort((a,b)=>(out.odm[b].loss-out.odm[a].loss)||(out.odm[b].u-out.odm[a].u))[0];
+  out.maxLoss=out.odm[out.worstO].loss; out.worst=out.profitAfter-out.maxLoss;
+  return out;
+}
+function buildTTR(){
+  let t="<tr><th>ODM</th><th>What could stop it</th><th>TTR (days)</th><th>TTR with a recovery programme (days)</th></tr>";
+  ODMS.forEach(o=>{ t+="<tr><td>"+ONAME[o]+"</td><td style='text-align:left'>"+CAUSE[o]+"</td><td>"+TTR[o]+"</td><td>"+(TTR[o]-PROG_CUT)+"</td></tr>"; });
+  document.getElementById("tb-ttr").innerHTML=t;
+}
+function renderResControls(){
+  let h=leverIntroHTML()+"<h3 style='margin-top:14px;'>Set your two new actions here</h3><p class='muted small' style='margin:0 0 6px;'>Each ODM has a 10% chance of stopping this quarter, one at a time. Every TV not delivered costs ₹6,000. Moving volume (action 3) is done with the sliders above.</p>";
+  h+="<div class='grp'><div class='gh'><span>DC buffer</span><span id='buf-v'></span></div><div class='ctl'><span>Stock held at the Chennai DC <span class='chip'>₹1,000 per TV</span> <span class='chip'>max 20,000</span></span><input type='range' id='buf-in' min='0' max='"+BUF_CAP+"' step='500' value='0' aria-label='DC buffer in TVs'><span class='v' id='buf-n'>0</span></div><div class='muted small' id='buf-note'></div></div>";
+  h+="<div class='grp'><div class='gh'><span>Recovery programmes</span><span class='chip'>₹50 lakh each · cuts TTR by 10 days</span></div>";
+  ODMS.forEach(o=>{ h+="<div class='chk'><input type='checkbox' id='pg-"+o+"'><label for='pg-"+o+"' style='font-weight:400;margin:0;'>"+ONAME[o]+": TTR "+TTR[o]+" → "+(TTR[o]-PROG_CUT)+" days</label></div>"; });
+  h+="</div>";
+  document.getElementById("prod-res").innerHTML=h;
+  document.getElementById("buf-in").addEventListener("input",e=>{ S.res.buf=+e.target.value; refresh(); save(); });
+  ODMS.forEach(o=>document.getElementById("pg-"+o).addEventListener("change",e=>{ S.res.prog[o]=e.target.checked; refresh(); save(); }));
+}
+function refreshRes(R){
+  const $=id=>document.getElementById(id), res=S.res, E=evalRes(R,res);
+  $("buf-in").value=res.buf; $("buf-n").textContent=fmtI(res.buf)+" TVs"; $("buf-v").textContent="₹"+cr(E.bufCost)+" crore";
+  $("buf-note").textContent="Equal to "+(res.buf/(TOT/SALES_DAYS)).toFixed(1)+" days of Tarang's total sales.";
+  ODMS.forEach(o=>{ $("pg-"+o).checked=!!res.prog[o]; });
+  const set=(id,v,warn)=>{ const e=$(id); e.querySelector(".n").textContent=v; e.classList.toggle("warn",!!warn); };
+  set("k-exp",cr(E.expProfit)); set("k-worst",cr(E.worst),E.maxLoss>0); set("k-profit",cr(E.profitAfter));
+  $("tb-cost").innerHTML="<tr><th>Item</th><th>₹ crore</th></tr><tr><td>Revenue</td><td>"+cr(REVENUE)+"</td></tr><tr><td>Production</td><td>"+cr(R.prod)+"</td></tr><tr><td>Freight</td><td>"+cr(R.freight)+"</td></tr><tr><td>Capital cost in transit</td><td>"+cr(R.pipe)+"</td></tr><tr><td>DC buffer</td><td>"+cr(E.bufCost)+"</td></tr><tr><td>Recovery programmes</td><td>"+cr(E.progCost)+"</td></tr><tr><td><b>Profit on an ordinary day</b></td><td><b>"+cr(E.profitAfter)+"</b></td></tr><tr><td>Expected shortfall loss (10% each)</td><td>"+cr(E.expLoss)+"</td></tr><tr><td><b>Expected profit (score)</b></td><td><b>"+cr(E.expProfit)+"</b></td></tr>";
+  let t="<tr><th>ODM</th><th>TVs a day</th><th>TTR (days)</th><th>TTS (days)</th><th>TVs short</th><th>Loss (₹ cr)</th></tr>";
+  ODMS.forEach(o=>{ const r=E.odm[o]; const st=r.u===0?"":(r.lost>0?"bad":"ok");
+    t+="<tr><td><span class='dot "+st+"'></span>"+o+"</td><td>"+fmtI(r.daily)+"</td><td>"+r.ttr+"</td><td>"+(r.u===0?"–":(r.tts>99?"99+":r.tts.toFixed(1)))+"</td><td class='"+st+"'>"+fmtI(r.lost)+"</td><td class='"+st+"'>"+cr(r.loss)+"</td></tr>"; });
+  $("tb-ttsr").innerHTML=t;
+  $("ttsr-note").textContent="Green: days retailers are still served. Red: days of unmet demand until the ODM is back.";
+  $("ttsr-chart").innerHTML=ttsChart(E); renderCB(R,E);
+}
+
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function leverSVG(){
+  const W=700,x0=250,sc=(W-x0-40)/30;
+  const rows=[["Without protection (example)",10,30],["Buffer: more TVs at the DC",20,30],["Recovery programme: restart sooner",10,20],["Move volume to another ODM",15,30]];
+  let s="<svg viewBox='0 0 "+W+" 262' width='100%' role='img' aria-label='How each action changes time to survive and time to recover'>";
+  rows.forEach((r,i)=>{ const y=22+i*54, tts=r[1], ttr=r[2];
+    s+="<text x='0' y='"+(y+19)+"' font-size='13' font-weight='600' fill='#1b2a4a'>"+r[0]+"</text>";
+    s+="<rect x='"+x0+"' y='"+y+"' width='"+(tts*sc)+"' height='28' fill='#9ccb9e'/>";
+    if(ttr>tts) s+="<rect x='"+(x0+tts*sc)+"' y='"+y+"' width='"+((ttr-tts)*sc)+"' height='28' fill='#e8a19a'/>";
+    s+="<line x1='"+(x0+ttr*sc)+"' y1='"+(y-6)+"' x2='"+(x0+ttr*sc)+"' y2='"+(y+34)+"' stroke='#c0392b' stroke-width='2.5'/>";
+    s+="<text x='"+(x0+4)+"' y='"+(y+19)+"' font-size='12' fill='#10331a'>survive "+tts+" days</text>";
+    if(ttr-tts>=8) s+="<text x='"+(x0+tts*sc+4)+"' y='"+(y+19)+"' font-size='12' fill='#5a1710'>short "+(ttr-tts)+" days</text>";
+    s+="<text x='"+(x0+ttr*sc+6)+"' y='"+(y+19)+"' font-size='12' font-weight='700' fill='#c0392b'>back in "+ttr+"</text>";
+  });
+  s+="<text x='"+x0+"' y='252' font-size='11' fill='#5a6472'>days after the ODM stops → green: retailers still served · red: TVs not delivered · red line: ODM is back at full output</text></svg>";
+  return s;
+}
+function leverIntroHTML(){
+  const card=(t,c,b)=>"<div style='background:#fff;border:1px solid var(--border);border-top:4px solid "+c+";border-radius:8px;padding:10px 12px;'><b style='color:"+c+"'>"+t+"</b><div class='small' style='margin-top:4px;'>"+b+"</div></div>";
+  return "<h3>Three ways to protect Tarang</h3>"+
+  "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:8px 0;'>"+
+  card("Buffer (new)","#2f5aa8","Spare TVs at the DC. Protects every ODM. ₹1,000 per TV.")+
+  card("Recovery programme (new)","#1e824c","Restart 10 days sooner. Protects one ODM. ₹50 lakh.")+
+  card("Move volume (sliders)","#c9972f","Fewer TVs at risk per ODM. Costs more per TV.")+
+  "</div>"+leverSVG()+"<p class='muted small' style='margin-top:2px;'>Illustration with made-up numbers.</p>";
+}
+function initLeverSetup(){ const e=document.getElementById("lever-svg-setup"); if(e) e.innerHTML=leverIntroHTML(); }
+function ttsChart(E){
+  const W=700,x0=130,sc=(W-x0-120)/60;
+  let s="<svg viewBox='0 0 "+W+" "+(ODMS.length*34+30)+"' width='100%' role='img' aria-label='Time to survive against time to recover for each ODM'>";
+  ODMS.forEach((o,i)=>{ const r=E.odm[o], y=6+i*34;
+    s+="<text x='0' y='"+(y+16)+"' font-size='12' font-weight='600' fill='#1b2a4a'>ODM "+o+" · "+SHORT[o]+"</text>";
+    if(r.u===0){ s+="<text x='"+x0+"' y='"+(y+16)+"' font-size='12' fill='#8aa0bf'>no TVs placed</text>"; return; }
+    const tts=Math.min(r.tts,60), ttr=Math.min(r.ttr,60);
+    s+="<rect x='"+x0+"' y='"+y+"' width='"+(tts*sc)+"' height='22' fill='#9ccb9e'/>";
+    if(r.ttr>r.tts) s+="<rect x='"+(x0+tts*sc)+"' y='"+y+"' width='"+((ttr-tts)*sc)+"' height='22' fill='#e8a19a'/>";
+    s+="<line x1='"+(x0+ttr*sc)+"' y1='"+(y-3)+"' x2='"+(x0+ttr*sc)+"' y2='"+(y+25)+"' stroke='#c0392b' stroke-width='2.5'/>";
+    s+="<text x='"+(x0+Math.max(tts,ttr)*sc+8)+"' y='"+(y+16)+"' font-size='12' font-weight='"+(r.lost>0?"700":"400")+"' fill='"+(r.lost>0?"#c0392b":"#1e824c")+"'>"+(r.lost>0?fmtI(r.lost)+" TVs short":"covered")+"</text>";
+  });
+  const yb=ODMS.length*34+4; [0,15,30,45,60].forEach(d=>{ s+="<text x='"+(x0+d*sc)+"' y='"+(yb+10)+"' font-size='10' fill='#5a6472' text-anchor='middle'>"+d+"</text>"; });
+  s+="<text x='"+(x0+60*sc+10)+"' y='"+(yb+10)+"' font-size='10' fill='#5a6472'>days</text></svg>";
+  return s;
+}
+function shiftPlan(from,to,k){
+  const pl=clone(S.plan); let left=k; const fk=from==="D"?["D"]:[from+"sea",from+"air"], tk=to==="D"?"D":to+"sea";
+  PRODS.forEach(p=>fk.forEach(key=>{ if(left<=0) return; const take=Math.min(left,pl[p][key]||0); pl[p][key]-=take; pl[p][tk]=(pl[p][tk]||0)+take; left-=take; }));
+  return left===0?pl:null;
+}
+function renderAlt(R,E){
+  const res=S.res, box=document.getElementById("alt-card"); if(!box) return;
+  const maxLost=EE=>Math.max.apply(null,ODMS.map(o=>EE.odm[o].lost));
+  const opts=[];
+  const add=(label,desc,plan,res2)=>{ const R2=plan?evalPlan(plan):R; if(plan&&!feasible(R2,3)) return null; const E2=evalRes(R2,res2); const o={label:label,desc:desc,cost:E.profitAfter-E2.profitAfter,dExp:E2.expProfit-E.expProfit,before:maxLost(E),after:maxLost(E2)}; opts.push(o); return o; };
+  if(res.buf<BUF_CAP){ const r2=clone(res); r2.buf=Math.min(BUF_CAP,res.buf+5000); add("Add "+fmtI(r2.buf-res.buf)+" TVs to the DC buffer","one buffer protects against every ODM",null,r2); }
+  const cand=ODMS.slice().sort((a,b)=>E.odm[b].loss-E.odm[a].loss).filter(o=>E.odm[o].u>0&&!res.prog[o]&&E.odm[o].loss>0)[0];
+  if(cand){ const r2=clone(res); r2.prog[cand]=true; add("Recovery programme at ODM "+cand,"restarts 10 days sooner; protects ODM "+cand+" only",null,r2); }
+  const w=E.worstO;
+  if(E.odm[w].u>0){ let best=null;
+    ODMS.filter(d=>d!==w).forEach(d=>{ const spare=Math.floor((CAP[d]-R.odm[d])/1000)*1000, k=Math.min(10000,Math.floor(E.odm[w].u/1000)*1000,spare); if(k<=0) return; const pl=shiftPlan(w,d,k); if(!pl) return; const R2=evalPlan(pl); if(!feasible(R2,3)) return; const E2=evalRes(R2,res); const o={label:"Move "+fmtI(k)+" TVs from ODM "+w+" to ODM "+d,desc:"no single stop hurts as much; costs more per TV",cost:E.profitAfter-E2.profitAfter,dExp:E2.expProfit-E.expProfit,before:maxLost(E),after:maxLost(E2)}; if(!best||o.dExp>best.dExp) best=o; });
+    if(best) opts.push(best); }
+  let h="<h3>Your options at a glance</h3><p class='muted small' style='margin:0 0 6px;'>Each row is tried on top of your current plan. The question is always the same: does it add more expected profit than it costs?</p>";
+  if(E.maxLoss===0) h+="<div class='banner green' style='margin:0;'>Right now no ODM is short: every survive time is at least as long as its recovery time. More protection would only add cost.</div>";
+  else {
+    const mx=Math.max(1,...opts.map(o=>Math.abs(o.dExp)));
+    h+="<table><tr><th>Option</th><th>Cost on an ordinary day (₹ cr)</th><th>Biggest shortfall (TVs)</th><th>Change in expected profit (₹ cr)</th></tr>";
+    opts.forEach(o=>{ const w=Math.round(Math.abs(o.dExp)/mx*90); h+="<tr><td style='text-align:left'><b>"+o.label+"</b><div class='muted small'>"+o.desc+"</div></td><td>"+(o.cost>=0?cr(o.cost):"−"+cr(-o.cost))+"</td><td>"+fmtI(o.before)+" → "+fmtI(o.after)+"</td><td style='text-align:left'><span style='display:inline-block;height:12px;width:"+w+"px;background:"+(o.dExp>=0?"#1e824c":"#c0392b")+";vertical-align:middle;border-radius:3px;'></span> <b style='color:"+(o.dExp>=0?"#1e824c":"#c0392b")+"'>"+(o.dExp>=0?"+":"−")+cr(Math.abs(o.dExp))+"</b></td></tr>"; });
+    h+="</table><p class='muted small' style='margin:6px 0 0;'>Green bars raise your score; red bars lower it. Try the best option, then look again: the options update.</p>";
+  }
+  box.innerHTML=h;
+}
+/* ---------- random-quarters simulator ---------- */
+function simHTML(pre){
+  return "<div class='simbox' id='"+pre+"-sim'>"+
+  "<p class='muted small' style='margin:0 0 8px;'>Each square is one quarter. In every quarter, each ODM independently stops with the chance you set (if two stop, the losses add). Your plan is compared with <b>the same volumes with no buffer and no recovery programmes</b>, on the same random quarters.</p>"+
+  "<div style='display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px;'>"+
+  "<span><b>Quarters:</b> <button class='secondary simN' data-n='100'>100</button> <button class='secondary simN' data-n='500'>500</button> <button class='secondary simN' data-n='1000'>1,000</button></span>"+
+  "<span style='flex:1;min-width:240px;'>Chance each ODM stops in a quarter: <b id='"+pre+"-pv'>10%</b><input type='range' id='"+pre+"-p' min='2' max='50' step='1' value='10' aria-label='Chance each ODM stops'></span>"+
+  "<button id='"+pre+"-run'>Draw the quarters</button></div>"+
+  "<div class='small' style='margin-bottom:6px;'><span class='lg' style='background:#1e824c'></span>no loss<span class='lg' style='background:#e0a030'></span>loss under 10% of profit<span class='lg' style='background:#c0392b'></span>loss of 10% or more<span class='lg' style='background:#e4e9f1'></span>not drawn yet</div>"+
+  "<h4 style='margin:8px 0 4px;'>Your plan</h4><canvas id='"+pre+"-c1' width='680' height='120'></canvas>"+
+  "<h4 style='margin:8px 0 4px;'>Same volumes, no protection</h4><canvas id='"+pre+"-c2' width='680' height='120'></canvas>"+
+  "<h4 style='margin:8px 0 4px;'>Average profit so far, as the quarters pile up</h4><canvas id='"+pre+"-c3' width='680' height='230'></canvas>"+
+  "<table id='"+pre+"-st' style='margin:8px 0;'></table>"+
+  "<h4 style='margin:8px 0 4px;'>Expected profit as the chance of a stoppage rises</h4><canvas id='"+pre+"-c4' width='680' height='250'></canvas><p class='muted' id='"+pre+"-cross'></p></div>";
+}
+function initSim(pre,getPlan){
+  const $=id=>document.getElementById(pre+"-"+id), st={N:100,U:[],count:0,raf:0}; let C=null;
+  const ctxOf=id=>{ const cv=$(id); const c=cv&&cv.getContext?cv.getContext("2d"):null; return c?{c:c,w:cv.width,h:cv.height}:null; };
+  const col=v=>v<=1e-9?"#1e824c":(v<0.10?"#e0a030":"#c0392b");
+  function model(){ const g=getPlan(), E=evalRes(g.R,g.res), Eu=evalRes(g.R,ZERORES);
+    const lp=ODMS.map(o=>E.odm[o].loss), lu=ODMS.map(o=>Eu.odm[o].loss), SP=lp.reduce((a,b)=>a+b,0), SU=lu.reduce((a,b)=>a+b,0);
+    return {E:E,Eu:Eu,R:g.R,lp:lp,lu:lu,SP:SP,SU:SU}; }
+  function compute(){ const m=model(), p=+$("p").value/100; const oP=[],oU=[],cP=[],cU=[]; let sP=0,sU=0;
+    st.U.forEach((u,i)=>{ let a=0,b=0; ODMS.forEach((o,k)=>{ if(u[k]<p){ a+=m.lp[k]; b+=m.lu[k]; } }); oP.push(m.E.profitAfter-a); oU.push(m.R.profit-b); sP+=oP[i]; sU+=oU[i]; cP.push(sP/(i+1)); cU.push(sU/(i+1)); });
+    C={m:m,p:p,oP:oP,oU:oU,cP:cP,cU:cU,sP:oP.map(v=>(m.E.profitAfter-v)/m.E.profitAfter),sU:oU.map(v=>(m.R.profit-v)/m.R.profit),expP:m.E.profitAfter-p*m.SP,expU:m.R.profit-p*m.SU}; }
+  function grid(id,shares){ const g=ctxOf(id); if(!g) return; const N=st.N, cols=N<=100?25:(N<=500?50:80), cell=Math.floor(g.w/cols), rows=Math.ceil(N/cols);
+    const cv=$(id); cv.height=rows*cell; g.c.clearRect(0,0,g.w,cv.height);
+    for(let i=0;i<N;i++){ const x=(i%cols)*cell, y=Math.floor(i/cols)*cell; g.c.fillStyle=(C&&i<st.count)?col(shares[i]):"#e4e9f1"; g.c.fillRect(x+1,y+1,cell-2,cell-2); } }
+  function line(){ const g=ctxOf("c3"); if(!g||!C) return; const c=g.c,w=g.w,h=g.h,L=60,T=24,B=26,R_=14;
+    c.clearRect(0,0,w,h); const lo=Math.min(C.expP,C.expU)-3e7, hi=C.m.E.profitAfter+0.5e7; const X=i=>L+(w-L-R_)*i/Math.max(1,st.N-1), Y=v=>T+(h-T-B)*(1-(Math.min(hi,Math.max(lo,v))-lo)/(hi-lo));
+    c.strokeStyle="#d7dee8"; c.fillStyle="#5a6472"; c.font="11px sans-serif"; for(let k=0;k<=4;k++){ const v=lo+(hi-lo)*k/4, y=Y(v); c.beginPath(); c.moveTo(L,y); c.lineTo(w-R_,y); c.stroke(); c.fillText((v/1e7).toFixed(1),8,y+4); }
+    c.fillText("quarters drawn →",w-110,h-6); c.fillText("₹ crore",8,10);
+    [[C.expP,"#2f5aa8"],[C.expU,"#c0392b"]].forEach(a=>{ c.setLineDash([6,4]); c.strokeStyle=a[1]; c.lineWidth=1.5; c.beginPath(); c.moveTo(L,Y(a[0])); c.lineTo(w-R_,Y(a[0])); c.stroke(); c.setLineDash([]); });
+    [[C.cP,"#2f5aa8"],[C.cU,"#c0392b"]].forEach(a=>{ c.strokeStyle=a[1]; c.lineWidth=2.5; c.beginPath(); for(let i=0;i<st.count;i++){ const x=X(i),y=Y(a[0][i]); if(i===0) c.moveTo(x,y); else c.lineTo(x,y); } c.stroke(); });
+    c.lineWidth=1; c.fillStyle="#2f5aa8"; c.fillText("your plan (dashed: what the formula expects)",L+6,h-8-0); c.fillStyle="#c0392b"; c.fillText("no protection",L+250,h-8); }
+  function sweep(){ const g=ctxOf("c4"); const m=model(), p=+$("p").value/100; const cross=$("cross");
+    const profU=m.R.profit, profP=m.E.profitAfter, cost=profU-profP;
+    if(cross){ if(m.SU-m.SP<=1) cross.textContent="Your buffer and recovery programmes do not reduce any loss in this plan, so they only add cost."; else { const ps=cost/(m.SU-m.SP); cross.textContent="Your protection costs ₹"+cr(cost)+" crore on an ordinary day. On average it pays for itself once each ODM has more than about "+(ps*100).toFixed(1)+"% chance of stopping in a quarter. At the chance you have set ("+Math.round(p*100)+"%), protection "+((profP-p*m.SP)>(profU-p*m.SU)?"pays: expected profit is higher with it.":"does not pay: expected profit is higher without it."); } }
+    if(!g) return; const c=g.c,w=g.w,h=g.h,L=60,T=24,B=28,R_=14; c.clearRect(0,0,w,h);
+    const f1=q=>profP-q*m.SP, f2=q=>profU-q*m.SU, lo=Math.min(f1(.5),f2(.5))-1e7, hi=Math.max(profU,profP)+0.5e7, X=q=>L+(w-L-R_)*q/0.5, Y=v=>T+(h-T-B)*(1-(v-lo)/(hi-lo));
+    c.strokeStyle="#d7dee8"; c.fillStyle="#5a6472"; c.font="11px sans-serif";
+    for(let k=0;k<=4;k++){ const v=lo+(hi-lo)*k/4, y=Y(v); c.beginPath(); c.moveTo(L,y); c.lineTo(w-R_,y); c.stroke(); c.fillText((v/1e7).toFixed(1),8,y+4); }
+    for(let k=0;k<=5;k++){ c.fillText((k*10)+"%",X(k*0.1)-8,h-12); } c.fillText("chance each ODM stops in a quarter →",L+150,h-1); c.fillText("₹ crore",8,10);
+    [[f1,"#2f5aa8"],[f2,"#c0392b"]].forEach(a=>{ c.strokeStyle=a[1]; c.lineWidth=2.5; c.beginPath(); c.moveTo(X(0),Y(a[0](0))); c.lineTo(X(.5),Y(a[0](.5))); c.stroke(); });
+    c.lineWidth=1.5; c.setLineDash([5,4]); c.strokeStyle="#1b2a4a"; c.beginPath(); c.moveTo(X(p),T); c.lineTo(X(p),h-B); c.stroke(); c.setLineDash([]);
+    c.fillStyle="#2f5aa8"; c.fillText("your plan",X(.30),Y(f1(.30))-8); c.fillStyle="#c0392b"; c.fillText("no protection",X(.30),Y(f2(.30))+16); }
+  function stats(){ if(!C) return; const n=st.N, q=(arr,f)=>{ const s=arr.slice().sort((a,b)=>a-b); return s[Math.max(0,Math.floor(f*(n-1)))]; };
+    const avg=a=>a.reduce((x,y)=>x+y,0)/n, big=sh=>sh.filter(v=>v>=0.10).length, any=sh=>sh.filter(v=>v>1e-9).length;
+    const row=(l,a,b)=>"<tr><td>"+l+"</td><td>"+a+"</td><td>"+b+"</td></tr>";
+    $("st").innerHTML="<tr><th>Over "+fmtI(n)+" quarters</th><th>Your plan</th><th>No protection</th></tr>"+
+    row("Average profit (₹ crore)","<b>"+cr(avg(C.oP))+"</b>","<b>"+cr(avg(C.oU))+"</b>")+
+    row("Quarters with a big loss (10% of profit or more)",big(C.sP)+" ("+Math.round(big(C.sP)/n*100)+"%)",big(C.sU)+" ("+Math.round(big(C.sU)/n*100)+"%)")+
+    row("Worst quarter (₹ crore)",cr(Math.min.apply(null,C.oP)),cr(Math.min.apply(null,C.oU))); }
+  function draw(){ if(!C) return; grid("c1",C.sP); grid("c2",C.sU); line(); }
+  function run(){ if(st.raf&&typeof cancelAnimationFrame==="function") cancelAnimationFrame(st.raf);
+    st.U=Array.from({length:st.N},()=>[Math.random(),Math.random(),Math.random(),Math.random()]); compute(); st.count=0;
+    const step=Math.max(1,Math.ceil(st.N/100));
+    const frame=()=>{ st.count=Math.min(st.N,st.count+step); draw(); if(st.count<st.N&&typeof requestAnimationFrame==="function") st.raf=requestAnimationFrame(frame); else { st.count=st.N; draw(); stats(); } };
+    frame(); sweep(); }
+  document.querySelectorAll("#"+pre+"-sim .simN").forEach(b=>{ b.addEventListener("click",()=>{ st.N=+b.dataset.n; document.querySelectorAll("#"+pre+"-sim .simN").forEach(x=>x.classList.toggle("active",x===b)); run(); }); });
+  const first=document.querySelector("#"+pre+"-sim .simN"); if(first) first.classList.add("active");
+  $("run").addEventListener("click",run);
+  $("p").addEventListener("input",()=>{ $("pv").textContent=$("p").value+"%"; if(st.U.length){ compute(); st.count=st.N; draw(); stats(); } sweep(); });
+  sweep(); draw();
+}
+
+function renderCB(R,E){
+  const box=document.getElementById("alt-card"); if(!box) return;
+  const Eu=evalRes(R,ZERORES), cost=E.bufCost+E.progCost, avoided=Eu.expLoss-E.expLoss, net=avoided-cost;
+  box.innerHTML="<h3>Is the protection worth it?</h3><p class='muted small' style='margin:0 0 6px;'>Spend on protection only if the loss it avoids is bigger than what it costs. Loss avoided = chance × TVs saved × ₹6,000.</p>"+
+  "<table><tr><td style='text-align:left'>Cost of protection (buffer + programmes)</td><td>₹"+cr(cost)+" cr</td></tr><tr><td style='text-align:left'>Expected loss avoided</td><td>₹"+cr(avoided)+" cr</td></tr><tr><td style='text-align:left'><b>Net gain</b></td><td><b style='color:"+(net>=0?"#1e824c":"#c0392b")+"'>"+(net>=0?"+":"−")+"₹"+cr(Math.abs(net))+" cr</b></td></tr></table>";
+}
+
+/* ================= FLOW ================= */
+document.getElementById("btn-start").addEventListener("click",()=>{
+  const n=document.getElementById("in-name").value.trim(), r=document.getElementById("in-roll").value.trim();
+  if(!n||!r){alert("Please enter both your name and roll number.");return;}
+  S.name=n;S.roll=r;S.stage="case";bar();save();showScreen("screen-case");
+});
+function openExh(){
+  let h="";
+  [["Exhibit 1. The four ODMs","tb-odm"],["Exhibit 2. Lanes to Chennai","tb-lane"],["Exhibit 3. Landed cost and carbon per TV","tb-landed"],["Exhibit 4. What could stop an ODM (Round 3)","tb-ttr"]].forEach(([t,id])=>{
+    const c=document.getElementById(id).cloneNode(true); c.removeAttribute("id"); h+="<h3 style='margin-top:12px;'>"+t+"</h3>"+c.outerHTML; });
+  h+="<p class='muted small'>Weights: 43-inch 0.022 t, 32-inch 0.0165 t. Capital cost 14% a year on production cost × days in transit ÷ 365. At least 30% of all units must arrive within 7 days (air or ODM D).</p>";
+  document.getElementById("exh-body").innerHTML=h; document.getElementById("exh-modal").style.display="block";
+}
+document.getElementById("btn-load1").addEventListener("click",()=>{
+  const src=S.round===3?S.r2:S.r1; S.plan=unitsToPlan(src.units); if(S.round===3) S.res=blankRes(); renderControls(); refresh(); save();
+});
+document.getElementById("btn-hint").addEventListener("click",()=>{
+  const want={1:PASSWORD_HINT1,2:PASSWORD_HINT,3:PASSWORD_HINT3}[S.round];
+  if(document.getElementById("hint-pw").value.trim().toLowerCase()!==want){ document.getElementById("hint-err").classList.add("show"); return; }
+  document.getElementById("hint-err").classList.remove("show"); document.getElementById("hint-pw").value="";
+  S.hints[S.round]=true;
+  if(S.round===1) S.plan=JSON.parse(JSON.stringify(REF_R1));
+  else if(S.round===2) S.plan=JSON.parse(JSON.stringify(HINT_PLAN));
+  else { S.plan=JSON.parse(JSON.stringify(HINT_PLAN3.plan)); S.res=JSON.parse(JSON.stringify(HINT_PLAN3.res)); }
+  renderControls(); refresh(); save();
+  const m=document.getElementById("hint-msg"); m.style.display="block";
+  m.textContent="A suggested plan has been loaded"+(S.round===3?", with a buffer and recovery programmes":"")+". It is close to the best, not necessarily the best. Compare it with your own thinking: which sources did it use more or less, and why? Try to improve it. Using the hint is recorded in your report.";
+});
+document.getElementById("btn-clear").addEventListener("click",()=>{ S.plan=blank(); S.res=blankRes(); renderControls(); refresh(); save(); });
+document.getElementById("btn-r3").addEventListener("click",()=>{
+  if(document.getElementById("r3-pw").value.trim().toLowerCase()===PASSWORD_ROUND3){
+    document.getElementById("r3-err").classList.remove("show"); document.getElementById("r3-pw").value="";
+    S.plan=unitsToPlan(S.r2.units); S.res=blankRes(); startRound(3);
+  } else document.getElementById("r3-err").classList.add("show");
+});
+
+document.getElementById("btn-sim").addEventListener("click",()=>{
+  document.getElementById("sim-body").innerHTML=simHTML("sm"); initSim("sm",()=>({R:evalPlan(S.plan),res:S.res}));
+  document.getElementById("sim-modal").style.display="block";
+});
+document.getElementById("btn-sim-close").addEventListener("click",()=>{ document.getElementById("sim-modal").style.display="none"; });
+document.getElementById("sim-modal").addEventListener("click",e=>{ if(e.target.id==="sim-modal") e.target.style.display="none"; });
+
+document.getElementById("btn-exh").addEventListener("click",openExh);
+document.getElementById("btn-exh-close").addEventListener("click",()=>{document.getElementById("exh-modal").style.display="none";});
+document.getElementById("exh-modal").addEventListener("click",e=>{ if(e.target.id==="exh-modal") e.target.style.display="none"; });
+document.getElementById("btn-pdf").addEventListener("click",()=>{
+  const d=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}), hr=hintRounds();
+  let h="<h2>Tarang: sourcing, carbon and resilience: my report</h2><p>Great Lakes Institute of Management, Chennai · Supply Chain Management · Prof. Pranesh Saisridhar<br>"+S.name+" · Roll "+S.roll+" · "+d+(hr.length?" · Hint plan used in Round "+hr.join(", "):"")+"</p>";
+  h+="<h3>Summary</h3><table>"+document.getElementById("tb-res").innerHTML+"</table><p>"+document.getElementById("res-note").textContent+" "+document.getElementById("res-note3").textContent+"</p>";
+  h+="<h3>Decisions and costs</h3><table>"+document.getElementById("tb-units").innerHTML+"</table><h3>Sustainability metrics</h3><table>"+document.getElementById("tb-sus").innerHTML+"</table>";
+  if(S.r3){ const c=document.createElement("div"); c.innerHTML=document.getElementById("res-body").innerHTML; c.querySelectorAll("button,#draw-out").forEach(x=>x.remove()); h+="<h3>Resilience</h3>"+c.innerHTML+"<p style='font-size:11px;'>Assumptions: 100,000 TVs sold over 60 days; each undelivered TV costs ₹6,000; buffer ₹1,000 per TV; recovery programme ₹50 lakh for 10 days off TTR; 10% chance of disruption at each ODM; one ODM stops at a time.</p>"; }
+  document.getElementById("print-report").innerHTML=h;
+  window.print();
+});
+
+document.getElementById("btn-back").addEventListener("click",()=>showScreen("screen-setup"));
+document.getElementById("btn-begin1").addEventListener("click",()=>startRound(1));
+drawChain(); example(); buildCase(); buildLanded(); buildTTR(); initLeverSetup();
+(function offerResume(){
+  try{
+    ['sg_state_v1','sg_state_v2'].forEach(k=>localStorage.removeItem(k));
+    const raw=localStorage.getItem("rg3_state_v1"); if(!raw) return; const d=JSON.parse(raw);
+    if(!d||!d.name||!d.stage||d.stage==="setup") return;
+    const where={case:"the exhibits page",play:"Round "+d.round,lock:"waiting for the Round 2 password",results:"the results page"}[d.stage]||"your last screen";
+    document.getElementById("resume-text").textContent="Saved progress found for "+d.name+" (roll "+d.roll+"): you were at "+where+".";
+    document.getElementById("resume-box").style.display="block";
+    document.getElementById("btn-resume").addEventListener("click",()=>{
+      Object.assign(S,d); document.getElementById("in-name").value=S.name; document.getElementById("in-roll").value=S.roll;
+      document.getElementById("resume-box").style.display="none";
+      if(S.stage==="case"){bar();showScreen("screen-case");}
+      else if(S.stage==="play"){ startRound(S.round); }
+      else if(S.stage==="lock"){ bar(); lockSummary(); showScreen("screen-lock"); }
+      else if(S.stage==="results"){ showResults(); }
+    });
+    document.getElementById("btn-fresh").addEventListener("click",()=>{ try{localStorage.removeItem("rg3_state_v1");}catch(e){} document.getElementById("resume-box").style.display="none"; });
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
